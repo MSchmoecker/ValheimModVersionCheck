@@ -31,15 +31,16 @@ async def on_message(message):
         await message.channel.send("Answer to a logfile message")
         return
 
-    if len(message.attachments) == 0:
+    replied_msg = await message.channel.fetch_message(message.reference.message_id)
+
+    if len(replied_msg.attachments) == 0:
         await message.channel.send("No file attached")
         return
 
-    if len(message.attachments) > 0:
+    if len(replied_msg.attachments) >= 2:
         await message.channel.send("Too many files")
         return
 
-    replied_msg = await message.channel.fetch_message(message.reference.message_id)
     log = requests.get(replied_msg.attachments[0].url).text
 
     print("Parse attached file ... ", end="")
