@@ -9,7 +9,7 @@ from parse import parse_local, fetch_online, compare_mods
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-DEBUG: bool = os.getenv('DEBUG').lower() == "true"
+DEBUG: bool = os.getenv("DEBUG", 'False').lower() in ('true', '1', 't')
 
 client = discord.Client()
 
