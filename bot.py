@@ -31,7 +31,7 @@ async def on_message(message):
         await message.channel.send("Answer to a logfile message")
         return
 
-    if message.attachments is None:
+    if len(message.attachments) == 0:
         await message.channel.send("No file attached")
         return
 
