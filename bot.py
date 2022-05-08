@@ -9,6 +9,7 @@ from parse import parse_local, fetch_online, compare_mods
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+DEBUG: bool = os.getenv('DEBUG').lower() == "true"
 
 client = discord.Client()
 
@@ -22,6 +23,9 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if message.author == client.user:
+        return
+
+    if DEBUG != (message.channel.name == 'vmvc-debug-test'):
         return
 
     if message.content != "!checkmods":
