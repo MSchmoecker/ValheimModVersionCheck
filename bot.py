@@ -47,6 +47,7 @@ async def on_message(message):
     mods_local = parse_local(log, True)
     print("done")
 
+    fetch_online()
     response = compare_mods(mods_local)
 
     if len(response) == 0:

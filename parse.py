@@ -14,6 +14,16 @@ def parse_created_date(target):
 
 
 def fetch_online():
+    global last_online_fetched, mods_online
+
+    if last_online_fetched is None or last_online_fetched < datetime.datetime.now() - datetime.timedelta(minutes=1):
+        print("Fetch online ... ", end="")
+        mods_online = _fetch_online()
+        print("done")
+        last_online_fetched = datetime.datetime.now()
+
+
+def _fetch_online():
     mods = {}
     r = requests.get("https://valheim.thunderstore.io/api/v1/package/")
     for mod in r.json():
@@ -51,14 +61,6 @@ def parse_local(local_text, is_logfile: bool):
 
 
 def compare_mods(mods_local):
-    global last_online_fetched, mods_online
-
-    if last_online_fetched is None or last_online_fetched < datetime.datetime.now() - datetime.timedelta(minutes=1):
-        print("Fetch online ... ", end="")
-        mods_online = fetch_online()
-        print("done")
-        last_online_fetched = datetime.datetime.now()
-
     time_threshold = datetime.datetime.now() - datetime.timedelta(days=30 * 6)
     result = ""
 
