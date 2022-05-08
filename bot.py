@@ -34,7 +34,7 @@ async def on_message(message):
         return
 
     if message.reference is None:
-        await message.channel.send("Answer to a logfile message")
+        await message.channel.send("Reply to a message containing a logfile")
         return
 
     replied_msg = await message.channel.fetch_message(message.reference.message_id)

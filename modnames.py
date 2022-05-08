@@ -8,8 +8,6 @@ def clean_name(name: str) -> str:
         return "DropThat"
     if cleaned == "PotionsPlus":
         return "PotionPlus"
-    if "Balrond" in cleaned:
-        return cleaned.replace("Balrond", "")
     if "RainbowTrollArmor" in cleaned:
         return "RainbowTrollArmor"
     if cleaned == "kgladder":
@@ -18,7 +16,11 @@ def clean_name(name: str) -> str:
         return "OdinsQOL"
     if "ValheimExpanded" in cleaned:
         return "ValheimExpanded"
-    if "Friendlies" in cleaned:
+    if cleaned == "Friendlies":
+        return "FriendliesReloaded"
+    if cleaned == "FriendliesAssets":
+        return "FriendliesReloaded"
+    if cleaned == "FriendliesAI":
         return "FriendliesReloaded"
     if cleaned == "SkillInjectorMod":
         return "SkillInjector"
