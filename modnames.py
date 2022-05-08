@@ -42,4 +42,8 @@ def clean_name(name: str) -> str:
         return "MoreandModifiedPlayerClothColliders"
     if cleaned == "CraftyCarts":
         return "CraftyCartsRemake"
+    if cleaned == "BronzeStoneworking":
+        return "BronzeStonecutting"
+    if cleaned == "RagnarsRökareMobAI" or cleaned == "RagnarsRÃ¶kareMobAI":
+        return "MobAILib"
     return cleaned

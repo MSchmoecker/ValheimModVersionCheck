@@ -4,14 +4,16 @@ import os
 import requests
 
 from dotenv import load_dotenv
-
-from parse import parse_local, fetch_online, compare_mods
+from mods import ModList
+from parse import parse_local, compare_mods
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 DEBUG: bool = os.getenv("DEBUG", 'False').lower() in ('true', '1', 't')
 
 client = discord.Client()
+modlist: ModList = ModList()
+modlist.fetch_mods()
 
 
 @client.event
@@ -51,8 +53,8 @@ async def on_message(message):
     mods_local = parse_local(log, True)
     print("done")
 
-    fetch_online()
-    response = compare_mods(mods_local)
+    modlist.fetch_mods()
+    response = compare_mods(mods_local, modlist.mods_online)
 
     if len(response) == 0:
         await message.channel.send("No outdated or old mods found!")

@@ -1,46 +1,9 @@
 import datetime
-import requests
+from typing import Dict
 
 from packaging import version
-
 from modnames import clean_name
-
-last_online_fetched: datetime = None
-mods_online: dict = {}
-
-
-def parse_created_date(target):
-    return datetime.datetime.strptime(target["date_created"], "%Y-%m-%dT%H:%M:%S.%fZ")
-
-
-def fetch_online():
-    global last_online_fetched, mods_online
-
-    if last_online_fetched is None or last_online_fetched < datetime.datetime.now() - datetime.timedelta(minutes=1):
-        print("Fetch online ... ", end="")
-        mods_online = _fetch_online()
-        print("done")
-        last_online_fetched = datetime.datetime.now()
-
-
-def _fetch_online():
-    mods = {}
-    r = requests.get("https://valheim.thunderstore.io/api/v1/package/")
-    for mod in r.json():
-        mod_name = clean_name(mod["name"]).lower()
-        mod_version = mod["versions"][0]["version_number"]
-        if mod_name not in mods:
-            mods[mod_name] = {
-                "version": mod_version,
-                "updated": parse_created_date(mod["versions"][0])
-            }
-        else:
-            if version.parse(mod_version) > version.parse(mods[mod_name]["version"]):
-                mods[mod_name] = {
-                    "version": mod_version,
-                    "updated": parse_created_date(mod["versions"][0])
-                }
-    return mods
+from mods import Mod
 
 
 def parse_local(local_text, is_logfile: bool):
@@ -60,7 +23,7 @@ def parse_local(local_text, is_logfile: bool):
     return mods
 
 
-def compare_mods(mods_local):
+def compare_mods(mods_local, mods_online: Dict[str, Mod]):
     time_threshold = datetime.datetime.now() - datetime.timedelta(days=30 * 6)
     result = ""
 
@@ -69,24 +32,24 @@ def compare_mods(mods_local):
         mod_version = mods_local[mod]["version"]
 
         if mod not in mods_online.keys():
-            print(f"{raw_name} not found at Thunderstore")
+            print(f"{raw_name} not found!")
             continue
 
-        outdated = version.parse(mod_version) < version.parse(mods_online[mod]["version"])
-        old = mods_online[mod]["updated"] < time_threshold
+        outdated = version.parse(mod_version) < version.parse(mods_online[mod].version)
+        old = mods_online[mod].updated < time_threshold
 
         if outdated or old:
             result += f"{raw_name}\n"
 
         if outdated:
-            result += f"\tis outdated {mod_version} -> {mods_online[mod]['version']}\n"
+            result += f"\tis outdated {mod_version} -> {mods_online[mod].version}\n"
 
         if old:
-            result += f"\tis old {mods_online[mod]['updated']}\n"
+            result += f"\tis old {mods_online[mod].updated}\n"
 
-        if version.parse(mod_version) > version.parse(mods_online[mod]["version"]):
+        if version.parse(mod_version) > version.parse(mods_online[mod].version):
             continue
             result += f"{raw_name} is newer"
-            result += f"\t{mod_version} -> {mods_online[mod]['version']}\n"
+            result += f"\t{mod_version} -> {mods_online[mod].version}\n"
 
     return result
