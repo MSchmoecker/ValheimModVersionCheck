@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./nexus_mods.json:/app/nexus_mods.json
