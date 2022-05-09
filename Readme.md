@@ -9,3 +9,6 @@ The discord command `!checkmods` is added. Reply to a message that contains a lo
 
 ![example](Docs/DiscordExample.png)
 
+## Development
+- Copy `.env.sample` to `.env` and set necessary values.
+- Run `docker-compose up --build` or `python app.py`
