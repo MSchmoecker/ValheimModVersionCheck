@@ -46,7 +46,7 @@ def get_highest_id_of_updated_mods():
 def add_new_mods(mods):
     highest_id = get_highest_id_of_updated_mods()
 
-    for mod_id in range(0, highest_id):
+    for mod_id in range(0, min(10, highest_id)):
         _fetch_mod(mods, mod_id + 1)
 
 

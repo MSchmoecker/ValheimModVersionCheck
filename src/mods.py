@@ -1,9 +1,7 @@
 import datetime
 from typing import Dict
 
-import nexus
-import thunderstore
-from modnames import clean_name
+from src import nexus, thunderstore, clean_name
 from packaging import version
 
 

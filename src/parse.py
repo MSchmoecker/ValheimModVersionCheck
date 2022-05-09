@@ -2,8 +2,7 @@ import datetime
 from typing import Dict
 
 from packaging import version
-from modnames import clean_name
-from mods import Mod
+from src import Mod, clean_name
 
 
 def parse_local(local_text, is_logfile: bool):
