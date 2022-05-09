@@ -22,6 +22,7 @@ class Mod:
 
 class ModList:
     mods_online: Dict[str, Mod] = {}
+    last_online_fetched: datetime = None
 
     @staticmethod
     def parse_thunder_created_date(date):
@@ -39,8 +40,20 @@ class ModList:
             self.mods_online[mod.clean_name] = mod
 
     def fetch_mods(self):
+        refresh_time = datetime.timedelta(minutes=5)
+
+        if self.last_online_fetched is not None and self.last_online_fetched >= datetime.datetime.now() - refresh_time:
+            return
+
+        self.last_online_fetched = datetime.datetime.now()
+
+        print("Fetching Thunderstore ...")
         thunder_mods = thunderstore.fetch_online()
+
+        print("Fetching Nexus ...")
         nexus_mods = nexus.fetch_online()
+
+        print("Adding mods ...")
 
         for mod in thunder_mods:
             mod_name = mod["name"]
@@ -56,4 +69,5 @@ class ModList:
             mod_updated = self.parse_nexus_created_date(mod["updated_time"])
             self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
 
+        print("All mods updated")
         return self.mods_online
