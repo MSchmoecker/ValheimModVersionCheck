@@ -97,8 +97,8 @@ def run():
 
         response = ""
 
-        for mod in sorted(mods_local.keys(), key=lambda x: x.lower()):
-            response += f'{mods_local[mod]["original_name"]} {mods_local[mod]["version"]}\n'
+        for mod in sorted(mods_local.values(), key=lambda x: x["original_name"].lower()):
+            response += f'{mod["original_name"]} {mod["version"]}\n'
 
         tmp = io.StringIO(response)
         response_file = discord.File(tmp, filename="mods.txt")
