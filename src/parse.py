@@ -16,6 +16,7 @@ def parse_local(local_text, is_logfile: bool):
 
         mod_name = clean_name("".join(line.split(" ")[:-1])).lower()
         mods[mod_name] = {
+            "original_name": "".join(line.split(" ")[:-1]),
             "raw_name": clean_name("".join(line.split(" ")[:-1])),
             "version": "".join(line.split(" ")[-1])
         }

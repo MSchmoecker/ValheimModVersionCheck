@@ -32,31 +32,45 @@ def run():
         if DEBUG != (hasattr(message.channel, 'name') and message.channel.name == 'vmvc-debug-test'):
             return
 
-        if message.content != "!checkmods":
-            return
+        if message.content == "!checkmods":
+            logging.info("")
+            logging.info("Got request !checkmods")
 
-        logging.info("")
-        logging.info("Got request")
+            log = await get_log(message)
 
+            if log is not None:
+                await on_checkmods(message, log)
+
+        if message.content == "!modlist":
+            logging.info("")
+            logging.info("Got request !modlist")
+
+            log = await get_log(message)
+
+            if log is not None:
+                await on_modlist(message, log)
+
+    async def get_log(message):
         if message.reference is None:
             logging.info("Message has no reference")
             await message.channel.send("Reply to an already posted logfile with !checkmods")
-            return
+            return None
 
         replied_msg = await message.channel.fetch_message(message.reference.message_id)
 
         if len(replied_msg.attachments) == 0:
             logging.info("Message has no attachments")
             await message.channel.send("No file attached")
-            return
+            return None
 
         if len(replied_msg.attachments) >= 2:
             logging.info("Message has too many attachments")
             await message.channel.send("Too many files")
-            return
+            return None
 
-        log = requests.get(replied_msg.attachments[0].url).text
+        return requests.get(replied_msg.attachments[0].url).text
 
+    async def on_checkmods(message, log):
         logging.info("Parse attached file ... ")
         mods_local = parse_local(log, True)
         logging.info("done")
@@ -74,6 +88,21 @@ def run():
         response_file = discord.File(tmp, filename="mods.txt")
         msg = "Here you go! " \
               "Versions are only read from the logfile and might not match the actual installed version"
+        await message.channel.send(msg, file=response_file)
+
+    async def on_modlist(message, log):
+        logging.info("Parse attached file ... ")
+        mods_local = parse_local(log, True)
+        logging.info("done")
+
+        response = ""
+
+        for mod in mods_local.values():
+            response += f'{mod["original_name"]} {mod["version"]}\n'
+
+        tmp = io.StringIO(response)
+        response_file = discord.File(tmp, filename="mods.txt")
+        msg = "Here you go!"
         await message.channel.send(msg, file=response_file)
 
     client.run(TOKEN)
