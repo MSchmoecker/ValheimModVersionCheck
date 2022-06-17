@@ -1,6 +1,6 @@
 import datetime
+import logging
 from typing import Dict
-
 from packaging import version
 from src import Mod, clean_name
 
@@ -31,7 +31,7 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
         mod_version = mods_local[mod]["version"]
 
         if mod not in mods_online.keys():
-            print(f"{raw_name} not found!")
+            logging.info(f"{raw_name} not found!")
             continue
 
         outdated = version.parse(mod_version) < version.parse(mods_online[mod].version)

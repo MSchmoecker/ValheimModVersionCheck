@@ -1,6 +1,6 @@
 import datetime
+import logging
 from typing import Dict
-
 from src import nexus, thunderstore, clean_name
 from packaging import version
 
@@ -45,13 +45,13 @@ class ModList:
 
         self.last_online_fetched = datetime.datetime.now()
 
-        print("Fetching Thunderstore ...")
+        logging.info("Fetching Thunderstore ...")
         thunder_mods = thunderstore.fetch_online()
 
-        print("Fetching Nexus ...")
+        logging.info("Fetching Nexus ...")
         nexus_mods = nexus.fetch_online()
 
-        print("Adding mods ...")
+        logging.info("Adding mods ...")
 
         for mod in thunder_mods:
             mod_name = mod["name"]
@@ -67,5 +67,5 @@ class ModList:
             mod_updated = self.parse_nexus_created_date(mod["updated_time"])
             self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
 
-        print("All mods updated")
+        logging.info("All mods updated")
         return self.mods_online

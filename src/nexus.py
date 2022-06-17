@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,9 +21,9 @@ def _fetch_mod(mods, mod_id, force=False):
         return
 
     if str(mod_id) not in mods:
-        print("Found new mod from Nexus with id", mod_id)
+        logging.info(f"Found new mod from Nexus with id {mod_id}")
     else:
-        print("Updating mod from Nexus with id", mod_id)
+        logging.info(f"Updating mod from Nexus with id {mod_id}")
 
     r = requests.get(mod_route(mod_id), headers={'apikey': API_KEY})
 

@@ -2,6 +2,7 @@ import io
 import discord
 import os
 import requests
+import logging
 
 from dotenv import load_dotenv
 from src import ModList, parse_local, compare_mods
@@ -11,6 +12,8 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 DEBUG: bool = os.getenv("DEBUG", 'False').lower() in ('true', '1', 't')
 
+logging.basicConfig(format='[%(asctime)s %(levelname)-8s] %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+
 
 def run():
     client = discord.Client()
@@ -19,7 +22,7 @@ def run():
 
     @client.event
     async def on_ready():
-        print(f'{client.user} has connected to Discord!')
+        logging.info(f'{client.user} has connected to Discord!')
 
     @client.event
     async def on_message(message):
@@ -32,36 +35,36 @@ def run():
         if message.content != "!checkmods":
             return
 
-        print()
-        print("Got request")
+        logging.info("")
+        logging.info("Got request")
 
         if message.reference is None:
-            print("Message has no reference")
-            await message.channel.send("Reply to a message containing a logfile")
+            logging.info("Message has no reference")
+            await message.channel.send("Reply to an already posted logfile with !checkmods")
             return
 
         replied_msg = await message.channel.fetch_message(message.reference.message_id)
 
         if len(replied_msg.attachments) == 0:
-            print("Message has no attachments")
+            logging.info("Message has no attachments")
             await message.channel.send("No file attached")
             return
 
         if len(replied_msg.attachments) >= 2:
-            print("Message has too many attachments")
+            logging.info("Message has too many attachments")
             await message.channel.send("Too many files")
             return
 
         log = requests.get(replied_msg.attachments[0].url).text
 
-        print("Parse attached file ... ", end="")
+        logging.info("Parse attached file ... ")
         mods_local = parse_local(log, True)
-        print("done")
+        logging.info("done")
 
         modlist.fetch_mods()
         response = compare_mods(mods_local, modlist.mods_online)
 
-        print("Send response with ", len(response), "outdated mods")
+        logging.info(f"Send response with {len(response)} outdated mods")
 
         if len(response) == 0:
             await message.channel.send("No outdated or old mods found!")
