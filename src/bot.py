@@ -42,7 +42,7 @@ def run():
             logging.info("")
             logging.info("Got request !checkmods")
 
-            log = await get_log(message)
+            log = await get_log(message, "!checkmods")
 
             if log is not None:
                 await on_checkmods(message, log)
@@ -51,15 +51,15 @@ def run():
             logging.info("")
             logging.info("Got request !modlist")
 
-            log = await get_log(message)
+            log = await get_log(message, "!modlist")
 
             if log is not None:
                 await on_modlist(message, log)
 
-    async def get_log(message):
+    async def get_log(message, command_name):
         if message.reference is None:
             logging.info("Message has no reference")
-            await message.channel.send("Reply to an already posted logfile with !checkmods")
+            await message.channel.send(f"Reply to an already posted logfile with {command_name}")
             return None
 
         replied_msg = await message.channel.fetch_message(message.reference.message_id)
