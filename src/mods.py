@@ -41,6 +41,7 @@ class ModList:
         refresh_time = datetime.timedelta(minutes=5)
 
         if self.last_online_fetched is not None and self.last_online_fetched >= datetime.datetime.now() - refresh_time:
+            logging.info("Skipping online fetch, last fetch was less than 5 minutes ago")
             return
 
         self.last_online_fetched = datetime.datetime.now()

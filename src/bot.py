@@ -6,6 +6,7 @@ import logging
 
 from dotenv import load_dotenv
 from src import ModList, parse_local, compare_mods
+from discord.ext import commands, tasks
 
 load_dotenv()
 
@@ -18,7 +19,12 @@ logging.basicConfig(format='[%(asctime)s %(levelname)-8s] %(message)s', level=lo
 def run():
     client = discord.Client()
     modlist: ModList = ModList()
-    modlist.fetch_mods()
+
+    @tasks.loop(hours=24)
+    async def fetch_mods():
+        modlist.fetch_mods()
+
+    fetch_mods.start()
 
     @client.event
     async def on_ready():
@@ -104,5 +110,7 @@ def run():
         response_file = discord.File(tmp, filename="mods.txt")
         msg = "Here you go!"
         await message.channel.send(msg, file=response_file)
+
+        modlist.fetch_mods()
 
     client.run(TOKEN)
