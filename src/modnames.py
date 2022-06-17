@@ -48,4 +48,12 @@ def clean_name(name: str) -> str:
         return "BronzeStonecutting"
     if cleaned == "RagnarsRökareMobAI" or cleaned == "RagnarsRÃ¶kareMobAI":
         return "MobAILib"
+    if cleaned == "MossBuild":
+        return "BalrondMossBuilds"
+    if cleaned == "AFeedBalrondTrough":
+        return "BalrondTrough"
+    if cleaned == "BalrondBarrell":
+        return "BalrondBarrel"
+    if cleaned == "AllTameableOverhaul":
+        return "AllTameableTamingOverhaul"
     return cleaned
