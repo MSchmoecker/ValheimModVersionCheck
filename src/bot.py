@@ -5,7 +5,7 @@ import requests
 import logging
 
 from dotenv import load_dotenv
-from src import ModList, parse_local, compare_mods
+from src import ModList, parse_local, compare_mods, fetch_errors
 from discord.ext import commands, tasks
 
 load_dotenv()
@@ -83,18 +83,31 @@ def run():
 
         modlist.fetch_mods()
         response = compare_mods(mods_local, modlist.mods_online)
+        errors = fetch_errors(log)
 
-        logging.info(f"Send response with {len(response)} outdated mods")
+        logging.info(f"Send response with {len(response)} outdated mods and {len(errors)} errors")
 
-        if len(response) == 0:
-            await message.channel.send("No outdated or old mods found!")
+        if len(response) == 0 and len(errors) == 0:
+            await message.channel.send("No outdated or old mods found. No errors found.")
             return
 
-        tmp = io.StringIO(response)
-        response_file = discord.File(tmp, filename="mods.txt")
+        response_file_outdated_mods = make_file(response, "mods.txt")
+        response_file_errors = make_file(errors, "errors.txt")
+        response_files = [f for f in [response_file_outdated_mods, response_file_errors] if f is not None]
+
         msg = "Here you go! " \
-              "Versions are only read from the logfile and might not match the actual installed version"
-        await message.channel.send(msg, file=response_file)
+              "Versions are only read from the logfile and might not match the actual installed version. "
+        if len(response) == 0:
+            msg += "No outdated or old mods found. "
+        if len(errors) == 0:
+            msg += "No errors found. "
+        await message.channel.send(msg, files=response_files)
+
+    def make_file(content, filename):
+        if content is None or len(content) == 0:
+            return None
+        tmp = io.StringIO(content)
+        return discord.File(tmp, filename=filename)
 
     async def on_modlist(message, log):
         logging.info("Parse attached file ... ")

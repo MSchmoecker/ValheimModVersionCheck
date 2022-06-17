@@ -52,3 +52,29 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
             result += f"\t{mod_version} -> {mods_online[mod].version}\n"
 
     return result
+
+
+def fetch_errors(log):
+    errors = ""
+    is_in_error = False
+    was_in_warning = False
+
+    for i, line in enumerate(log.splitlines()):
+        if line == "":
+            if is_in_error:
+                errors += "\n"
+            is_in_error = False
+            continue
+
+        if is_in_error or line.startswith("[Error"):
+            if was_in_warning:
+                errors += "\n"
+                was_in_warning = False
+            errors += f"{line}\n"
+            is_in_error = True
+
+        if line.startswith("[Warning"):
+            errors += f"{line}\n"
+            was_in_warning = True
+
+    return errors
