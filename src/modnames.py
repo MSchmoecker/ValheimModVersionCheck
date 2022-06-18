@@ -10,6 +10,10 @@ def clean_name(name: str) -> str:
         return "PotionPlus"
     if "RainbowTrollArmor" in cleaned:
         return "RainbowTrollArmor"
+    if cleaned == "Detalhes.EraSystem":
+        return "ValheimEraSystemVAS"
+    if "Detalhes." in cleaned:
+        return cleaned.replace("Detalhes.", "")
     if cleaned == "kgladder":
         return "BetterLadders"
     if cleaned == "OdinPlusQOL":
@@ -54,6 +58,14 @@ def clean_name(name: str) -> str:
         return "BalrondTrough"
     if cleaned == "BalrondBarrell":
         return "BalrondBarrel"
+    if cleaned == "BalrondMetalLocker":
+        return "BalrondMetalShelf"
     if cleaned == "AllTameableOverhaul":
         return "AllTameableTamingOverhaul"
+    if cleaned == "KrumpacZMonsters":
+        return "Monsters"
+    if cleaned == "MrSerjiConstruction":
+        return "Construction"
+    if cleaned == "TrashItemsMod":
+        return "TrashItems"
     return cleaned
