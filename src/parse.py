@@ -15,18 +15,25 @@ def parse_local(local_text, is_logfile: bool):
             line = line[line.index("[", 1) + 1:line.index("]", 20)]
 
         mod_name = clean_name("".join(line.split(" ")[:-1])).lower()
+        mod_original_name = "".join(line.split(" ")[:-1])
+        mod_version = "".join(line.split(" ")[-1])
+
+        if mod_name == "valheimplus":
+            mod_version = mod_version[2:]
+
         mods[mod_name] = {
-            "original_name": "".join(line.split(" ")[:-1]),
-            "version": "".join(line.split(" ")[-1])
+            "original_name": mod_original_name,
+            "version": mod_version
         }
+
     return mods
 
 
 def compare_mods(mods_local, mods_online: Dict[str, Mod]):
-    time_threshold = datetime.datetime.now() - datetime.timedelta(days=30 * 6)
+    time_threshold = datetime.datetime.now() - datetime.timedelta(days=30 * 12)
     result = ""
 
-    for mod in mods_local:
+    for mod in sorted(mods_local, key=lambda x: mods_local[x]["original_name"].lower()):
         original_name = mods_local[mod]["original_name"]
         mod_version = mods_local[mod]["version"]
 
@@ -44,7 +51,7 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
             result += f"\tis outdated {mod_version} -> {mods_online[mod].version}\n"
 
         if old:
-            result += f"\tis old {mods_online[mod].updated}\n"
+            result += f"\tis older then one year ({mods_online[mod].updated.strftime('%Y-%m-%d %H:%M:%S')})\n"
 
         if version.parse(mod_version) > version.parse(mods_online[mod].version):
             continue
