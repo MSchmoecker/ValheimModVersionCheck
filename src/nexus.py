@@ -3,6 +3,7 @@ import os
 import requests
 import logging
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 API_KEY = os.getenv('NEXUS_API_KEY')
@@ -14,6 +15,9 @@ def mod_route(mod_id):
 
 def updated_route():
     return f"https://api.nexusmods.com/v1/games/valheim/mods/updated.json?period=1m"
+
+
+file_path = Path("data/nexus_mods.json")
 
 
 def _fetch_mod(mods, mod_id, force=False):
@@ -32,7 +36,8 @@ def _fetch_mod(mods, mod_id, force=False):
     else:
         mods[str(mod_id)] = None
 
-    with open('nexus_mods.json', 'w') as f:
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(file_path, 'w') as f:
         json.dump(mods, f, indent=4)
 
 
@@ -69,8 +74,8 @@ def update_mods(mods):
 def fetch_online():
     mods = {}
 
-    if os.path.isfile('nexus_mods.json'):
-        with open('nexus_mods.json', 'r+') as f:
+    if os.path.isfile(file_path):
+        with open(file_path, 'r+') as f:
             mods = json.load(f)
 
     add_new_mods(mods)
