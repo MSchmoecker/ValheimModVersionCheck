@@ -20,7 +20,7 @@ def run(file_lock: RWLockRead):
     client = discord.Client()
     modlist: ModList = ModList(file_lock)
 
-    @tasks.loop(hours=24)
+    @tasks.loop(hours=1)
     async def fetch_mods():
         modlist.fetch_mods()
 
