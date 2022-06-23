@@ -39,9 +39,9 @@ class ModList:
     def parse_nexus_created_date(date):
         return datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f%z").replace(tzinfo=None)
 
-    def _try_add_online_mod(self, mod: Mod):
+    def _try_add_online_mod(self, mod: Mod, soft_add=False):
         if mod.clean_name in self.mods_online:
-            if mod.version > self.mods_online[mod.clean_name].version:
+            if not soft_add and mod.version > self.mods_online[mod.clean_name].version:
                 self.mods_online[mod.clean_name] = mod
             elif mod.version == self.mods_online[mod.clean_name].version:
                 self.mods_online[mod.clean_name].updated = min(mod.updated, self.mods_online[mod.clean_name].updated)
@@ -65,27 +65,10 @@ class ModList:
 
         self.last_online_fetched = datetime.datetime.now()
 
-        logging.info("Fetching Thunderstore ...")
-        thunder_mods = thunderstore.fetch_online()
-
         logging.info("Fetching Nexus ...")
         nexus_mods = nexus.fetch_online()
 
         logging.info("Adding mods ...")
-
-        for mod in thunder_mods:
-            mod_name = mod["name"]
-            mod_version = mod["versions"][0]["version_number"]
-            mod_updated = self.parse_thunder_created_date(mod["versions"][0]["date_created"])
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
-
-        for mod in nexus_mods.values():
-            if mod is None or mod["status"] != "published":
-                continue
-            mod_name = mod["name"]
-            mod_version = mod["version"]
-            mod_updated = self.parse_nexus_created_date(mod["updated_time"])
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
 
         decompiled_mods = decompile.read_extracted_mod_from_file(self.read_lock)
         for online_mod_key in decompiled_mods:
@@ -96,6 +79,14 @@ class ModList:
                 mod_name = online_mod["mods"][mod]["name"]
                 mod_version = online_mod["mods"][mod]["version"]
                 self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
+
+        for mod in nexus_mods.values():
+            if mod is None or mod["status"] != "published":
+                continue
+            mod_name = mod["name"]
+            mod_version = mod["version"]
+            mod_updated = self.parse_nexus_created_date(mod["updated_time"])
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated), True)
 
         logging.info("All mods updated")
         return self.mods_online
