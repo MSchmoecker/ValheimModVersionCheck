@@ -5,6 +5,8 @@ import requests
 import logging
 
 from dotenv import load_dotenv
+from readerwriterlock.rwlock import RWLockRead
+
 from src import ModList, parse_local, compare_mods, fetch_errors
 from discord.ext import commands, tasks
 
@@ -13,12 +15,10 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 DEBUG: bool = os.getenv("DEBUG", 'False').lower() in ('true', '1', 't')
 
-logging.basicConfig(format='[%(asctime)s %(levelname)-8s] %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
-
-def run():
+def run(file_lock: RWLockRead):
     client = discord.Client()
-    modlist: ModList = ModList()
+    modlist: ModList = ModList(file_lock)
 
     @tasks.loop(hours=24)
     async def fetch_mods():

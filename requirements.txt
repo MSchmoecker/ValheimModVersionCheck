@@ -2,3 +2,4 @@ discord~=1.7.3
 requests~=2.27.1
 packaging~=21.3
 python-dotenv~=0.20.0
+readerwriterlock~=1.0.9
