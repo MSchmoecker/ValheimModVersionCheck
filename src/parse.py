@@ -73,6 +73,12 @@ def fetch_errors(log):
             is_in_error = False
             continue
 
+        if line.startswith("[Info"):
+            if is_in_error:
+                errors += "\n"
+            is_in_error = False
+            was_in_warning = False
+
         if is_in_error or line.startswith("[Error"):
             if was_in_warning:
                 errors += "\n"
