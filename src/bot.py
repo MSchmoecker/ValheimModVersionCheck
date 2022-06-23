@@ -96,7 +96,7 @@ def run(file_lock: RWLockRead):
         response_files = [f for f in [response_file_outdated_mods, response_file_errors] if f is not None]
 
         msg = "Here you go! " \
-              "Versions might not match the actual installed version if the mod is only available on NexusMods. "
+              "A version might not exist if the mod is only available on NexusMods or the name is ambiguous."
         if len(response) == 0:
             msg += "No outdated or old mods found. "
         if len(errors) == 0:
