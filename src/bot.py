@@ -1,4 +1,6 @@
 import io
+from typing import Optional
+
 import discord
 import os
 import requests
@@ -56,27 +58,36 @@ def run(file_lock: RWLockRead):
             if log is not None:
                 await on_modlist(message, log)
 
-    async def get_log(message, command_name):
+        log = await _get_log_from_attachment(message, message.attachments)
+        if log is not None and log.splitlines()[0].strip().startswith("[Message:   BepInEx]"):
+            await on_checkmods(message, log, True)
+
+    async def get_log(message, command_name, silent=False) -> Optional[str]:
         if message.reference is None:
-            logging.info("Message has no reference")
-            await message.channel.send(f"Reply to an already posted logfile with {command_name}")
+            if not silent:
+                logging.info("Message has no reference")
+                await message.channel.send(f"Reply to an already posted logfile with {command_name}")
             return None
 
         replied_msg = await message.channel.fetch_message(message.reference.message_id)
+        return await _get_log_from_attachment(message, replied_msg.attachments, silent)
 
-        if len(replied_msg.attachments) == 0:
-            logging.info("Message has no attachments")
-            await message.channel.send("No file attached")
+    async def _get_log_from_attachment(message, attachments, silent=False) -> Optional[str]:
+        if len(attachments) == 0:
+            if not silent:
+                logging.info("Message has no attachments")
+                await message.channel.send("No file attached")
             return None
 
-        if len(replied_msg.attachments) >= 2:
-            logging.info("Message has too many attachments")
-            await message.channel.send("Too many files")
+        if len(attachments) >= 2:
+            if not silent:
+                logging.info("Message has too many attachments")
+                await message.channel.send("Too many files")
             return None
 
-        return requests.get(replied_msg.attachments[0].url).text
+        return requests.get(attachments[0].url).text
 
-    async def on_checkmods(message, log):
+    async def on_checkmods(message, log, silent_on_no_findings=False):
         logging.info("Parse attached file ... ")
         mods_local = parse_local(log, True)
         logging.info("done")
@@ -84,6 +95,9 @@ def run(file_lock: RWLockRead):
         modlist.fetch_mods()
         response = compare_mods(mods_local, modlist.mods_online)
         errors = fetch_errors(log)
+
+        if silent_on_no_findings and len(response) == 0:
+            return
 
         logging.info(f"Send response with {len(response)} outdated mods and {len(errors)} errors")
 
