@@ -15,10 +15,10 @@ class Mod:
     version: version
     updated: datetime.datetime
 
-    def __init__(self, name: str, version: str, updated: datetime.datetime):
+    def __init__(self, name: str, mod_version: str, updated: datetime.datetime):
         self.name = name
         self.clean_name = clean_name(name).lower()
-        self.version = version
+        self.version = version.parse(mod_version)
         self.updated = updated
 
 

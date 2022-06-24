@@ -23,7 +23,7 @@ def parse_local(local_text, is_logfile: bool):
 
         mods[mod_name] = {
             "original_name": mod_original_name,
-            "version": mod_version
+            "version": version.parse(mod_version)
         }
 
     return mods
@@ -41,7 +41,7 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
             logging.info(f"{original_name} not found!")
             continue
 
-        outdated = version.parse(mod_version) < version.parse(mods_online[mod].version)
+        outdated = mod_version < mods_online[mod].version
         old = mods_online[mod].updated < time_threshold
 
         if outdated or old:
@@ -53,7 +53,7 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
         if old:
             result += f"\tis older then one year ({mods_online[mod].updated.strftime('%Y-%m-%d %H:%M:%S')})\n"
 
-        if version.parse(mod_version) > version.parse(mods_online[mod].version):
+        if mod_version > mods_online[mod].version:
             continue
             result += f"{original_name} is newer"
             result += f"\t{mod_version} -> {mods_online[mod].version}\n"
