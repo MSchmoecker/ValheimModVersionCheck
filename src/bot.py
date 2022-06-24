@@ -47,7 +47,8 @@ def run(file_lock: RWLockRead):
             log = await get_log(message, "!checkmods")
 
             if log is not None:
-                await on_checkmods(message, log)
+                await on_checkmods(message, message.reference, log, False)
+            return
 
         if message.content == "!modlist":
             logging.info("")
@@ -57,10 +58,11 @@ def run(file_lock: RWLockRead):
 
             if log is not None:
                 await on_modlist(message, log)
+            return
 
         log = await _get_log_from_attachment(message, message.attachments)
         if log is not None and log.splitlines()[0].strip().startswith("[Message:   BepInEx]"):
-            await on_checkmods(message, log, True)
+            await on_checkmods(message, message, log, True)
 
     async def get_log(message, command_name, silent=False) -> Optional[str]:
         if message.reference is None:
@@ -87,7 +89,7 @@ def run(file_lock: RWLockRead):
 
         return requests.get(attachments[0].url).text
 
-    async def on_checkmods(message, log, silent_on_no_findings=False):
+    async def on_checkmods(message, original_message, log, silent_on_no_findings):
         logging.info("Parse attached file ... ")
         mods_local = parse_local(log, True)
         logging.info("done")
@@ -102,7 +104,7 @@ def run(file_lock: RWLockRead):
         logging.info(f"Send response with {len(response)} outdated mods and {len(errors)} errors")
 
         if len(response) == 0 and len(errors) == 0:
-            await message.channel.send("No outdated or old mods found. No errors found.")
+            await message.channel.send("No outdated or old mods found. No errors found.", reference=original_message)
             return
 
         response_file_outdated_mods = make_file(response, "mods.txt")
@@ -115,7 +117,7 @@ def run(file_lock: RWLockRead):
             msg += "No outdated or old mods found. "
         if len(errors) == 0:
             msg += "No errors found. "
-        await message.channel.send(msg, files=response_files)
+        await message.channel.send(msg, files=response_files, reference=original_message)
 
     def make_file(content, filename):
         if content is None or len(content) == 0:
