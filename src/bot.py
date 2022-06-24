@@ -60,7 +60,7 @@ def run(file_lock: RWLockRead):
                 await on_modlist(message, log)
             return
 
-        log = await _get_log_from_attachment(message, message.attachments)
+        log = await _get_log_from_attachment(message, message.attachments, True)
         if log is not None and log.splitlines()[0].strip().startswith("[Message:   BepInEx]"):
             await on_checkmods(message, message, log, True)
 
@@ -74,7 +74,7 @@ def run(file_lock: RWLockRead):
         replied_msg = await message.channel.fetch_message(message.reference.message_id)
         return await _get_log_from_attachment(message, replied_msg.attachments, silent)
 
-    async def _get_log_from_attachment(message, attachments, silent=False) -> Optional[str]:
+    async def _get_log_from_attachment(message, attachments, silent) -> Optional[str]:
         if len(attachments) == 0:
             if not silent:
                 logging.info("Message has no attachments")
