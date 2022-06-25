@@ -87,7 +87,13 @@ def run(file_lock: RWLockRead):
                 await message.channel.send("Too many files")
             return None
 
-        return requests.get(attachments[0].url).text
+        try:
+            attachment_url = attachments[0].url
+            r = requests.get(attachment_url)
+            return r.text
+        except Exception as e:
+            logging.exception(f"Failed to get log from attachment: {e}")
+            return None
 
     async def on_checkmods(message, original_message, log, silent_on_no_findings):
         logging.info("Parse attached file ... ")
