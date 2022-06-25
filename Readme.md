@@ -22,6 +22,7 @@ services:
       - PYTHONUNBUFFERED=1
       - DISCORD_TOKEN={your-bot-token}
       - NEXUS_API_KEY={your-nexus-api-key}
+      - DECOMPILE_THUNDERSTORE_MODS=false
     volumes:
       - ./data:/app/data/
 ```

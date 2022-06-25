@@ -5,7 +5,7 @@ from typing import Dict
 
 from readerwriterlock.rwlock import RWLockRead
 
-from src import nexus, thunderstore, clean_name, decompile
+from src import nexus, thunderstore, clean_name, decompile, env
 from packaging import version
 
 
@@ -55,15 +55,21 @@ class ModList:
             logging.info("Skipping online fetch, last fetch was less than 5 minutes ago")
             return
 
-        if self.decompile_thread is None or not self.decompile_thread.is_alive():
-            logging.info("Start decompile thread")
-            self.decompile_thread = threading.Thread(target=decompile.fetch_mods, name="Decompile",
-                                                     args=(self.file_lock,), daemon=True)
-            self.decompile_thread.start()
-        else:
-            logging.info("Decompile thread is already running")
-
         self.last_online_fetched = datetime.datetime.now()
+
+        if env.DECOMPILE_THUNDERSTORE_MODS:
+            if self.decompile_thread is None or not self.decompile_thread.is_alive():
+                logging.info("Start decompile thread")
+                self.decompile_thread = threading.Thread(target=decompile.fetch_mods, name="Decompile",
+                                                         args=(self.file_lock,), daemon=True)
+                self.decompile_thread.start()
+            else:
+                logging.info("Decompile thread is already running")
+
+            thunder_mods = []
+        else:
+            logging.info("Fetching Thunderstore ...")
+            thunder_mods = thunderstore.fetch_online()
 
         logging.info("Fetching Nexus ...")
         nexus_mods = nexus.fetch_online()
@@ -79,6 +85,12 @@ class ModList:
                 mod_name = online_mod["mods"][mod]["name"]
                 mod_version = online_mod["mods"][mod]["version"]
                 self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
+
+        for mod in thunder_mods:
+            mod_name = mod["name"]
+            mod_version = mod["versions"][0]["version_number"]
+            mod_updated = self.parse_thunder_created_date(mod["versions"][0]["date_created"])
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
