@@ -1,21 +1,11 @@
 import io
-from typing import Optional
-
 import discord
-import os
 import requests
 import logging
-
-from dotenv import load_dotenv
 from readerwriterlock.rwlock import RWLockRead
-
-from src import ModList, parse_local, compare_mods, fetch_errors
+from src import ModList, parse_local, compare_mods, fetch_errors, env
 from discord.ext import commands, tasks
-
-load_dotenv()
-
-TOKEN = os.getenv('DISCORD_TOKEN')
-DEBUG: bool = os.getenv("DEBUG", 'False').lower() in ('true', '1', 't')
+from typing import Optional
 
 
 def run(file_lock: RWLockRead):
@@ -37,7 +27,7 @@ def run(file_lock: RWLockRead):
         if message.author == client.user:
             return
 
-        if DEBUG != (hasattr(message.channel, 'name') and message.channel.name == 'vmvc-debug-test'):
+        if env.DEBUG != (hasattr(message.channel, 'name') and message.channel.name == 'vmvc-debug-test'):
             return
 
         if message.content == "!checkmods":
@@ -148,4 +138,4 @@ def run(file_lock: RWLockRead):
 
         modlist.fetch_mods()
 
-    client.run(TOKEN)
+    client.run(env.DISCORD_TOKEN)

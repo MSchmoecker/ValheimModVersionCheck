@@ -2,11 +2,8 @@ import json
 import os
 import requests
 import logging
-from dotenv import load_dotenv
 from pathlib import Path
-
-load_dotenv()
-API_KEY = os.getenv('NEXUS_API_KEY')
+from src import env
 
 
 def mod_route(mod_id):
@@ -29,7 +26,7 @@ def _fetch_mod(mods, mod_id, force=False):
     else:
         logging.info(f"Updating mod from Nexus with id {mod_id}")
 
-    r = requests.get(mod_route(mod_id), headers={'apikey': API_KEY})
+    r = requests.get(mod_route(mod_id), headers={'apikey': env.NEXUS_API_KEY})
 
     if r.status_code == 200:
         mods[str(mod_id)] = r.json()
@@ -42,7 +39,7 @@ def _fetch_mod(mods, mod_id, force=False):
 
 
 def get_highest_id_of_updated_mods():
-    r = requests.get(updated_route(), headers={'apikey': API_KEY})
+    r = requests.get(updated_route(), headers={'apikey': env.NEXUS_API_KEY})
     if r.status_code == 200:
         return max(r.json(), key=lambda x: x['mod_id'])['mod_id']
 
@@ -57,7 +54,7 @@ def add_new_mods(mods):
 
 
 def update_mods(mods):
-    r = requests.get(updated_route(), headers={'apikey': API_KEY})
+    r = requests.get(updated_route(), headers={'apikey': env.NEXUS_API_KEY})
 
     if r.status_code == 200:
         updated = r.json()
