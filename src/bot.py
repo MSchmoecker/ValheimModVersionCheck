@@ -14,10 +14,11 @@ from typing import Optional
 def run(file_lock: RWLockRead):
     client = discord.Client()
     modlist: ModList = ModList(file_lock)
+    modlist.update_mod_list()
 
     @tasks.loop(hours=1)
     async def fetch_mods():
-        await wait_non_blocking(seconds=5)
+        await wait_non_blocking(seconds=10)
         modlist.fetch_mods()
 
     fetch_mods.start()
