@@ -17,6 +17,7 @@ def fetch_mods(file_lock: RWLockRead):
     thunder_mods = thunderstore.fetch_online()
     write_lock = file_lock.gen_rlock()
     read_lock = file_lock.gen_rlock()
+    decompiled_mods = read_extracted_mod_from_file(read_lock)
 
     for mod in thunder_mods:
         online_mod_name = mod["full_name"]
@@ -26,16 +27,14 @@ def fetch_mods(file_lock: RWLockRead):
         date_created = mod["versions"][0]["date_created"]
 
         if online_name != "BepInExPack_Valheim" and online_name != "r2modman":
-            decompiled_mods = read_extracted_mod_from_file(read_lock)
             if online_mod_name in decompiled_mods \
                     and online_mod_version == decompiled_mods[online_mod_name]["online_version"]:
                 continue
+
             plugins = extract_mod_metadata(online_mod_name, online_mod_version, download_url)
 
             write_lock.acquire()
             try:
-                decompiled_mods = _read_decompiled_mods()
-
                 if online_mod_name not in decompiled_mods:
                     decompiled_mods[online_mod_name] = {}
 
