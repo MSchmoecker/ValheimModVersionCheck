@@ -119,7 +119,7 @@ class ModList:
     def run_decompile_thread(self):
         if self.decompile_thread is None or not self.decompile_thread.is_alive():
             logging.info("Start decompile thread")
-            self.decompile_thread = threading.Thread(target=self.decompile_mods, name="Decompile", daemon=True)
+            self.decompile_thread = threading.Thread(target=self.decompile_mods, name="DecompileThread", daemon=True)
             self.decompile_thread.start()
         else:
             logging.info("Decompile thread is already running")
