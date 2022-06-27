@@ -23,13 +23,21 @@ class Mod:
 
 
 class ModList:
-    mods_online: Dict[str, Mod] = {}
+    _mods_online: Dict[str, Mod] = {}
     last_online_fetched: datetime = None
 
     def __init__(self, file_lock: RWLockRead):
         self.decompile_thread = None
         self.file_lock = file_lock
         self.read_lock = file_lock.gen_rlock()
+        self.write_lock = file_lock.gen_wlock()
+
+    def get_online_mods(self) -> Dict[str, Mod]:
+        self.read_lock.acquire()
+        try:
+            return self._mods_online
+        finally:
+            self.read_lock.release()
 
     @staticmethod
     def parse_thunder_created_date(date):
@@ -40,13 +48,15 @@ class ModList:
         return datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f%z").replace(tzinfo=None)
 
     def _try_add_online_mod(self, mod: Mod, soft_add=False):
-        if mod.clean_name in self.mods_online:
-            if not soft_add and mod.version > self.mods_online[mod.clean_name].version:
-                self.mods_online[mod.clean_name] = mod
-            elif mod.version == self.mods_online[mod.clean_name].version:
-                self.mods_online[mod.clean_name].updated = min(mod.updated, self.mods_online[mod.clean_name].updated)
+        self.write_lock.acquire()
+        if mod.clean_name in self._mods_online:
+            if not soft_add and mod.version > self._mods_online[mod.clean_name].version:
+                self._mods_online[mod.clean_name] = mod
+            elif mod.version == self._mods_online[mod.clean_name].version:
+                self._mods_online[mod.clean_name].updated = min(mod.updated, self._mods_online[mod.clean_name].updated)
         else:
-            self.mods_online[mod.clean_name] = mod
+            self._mods_online[mod.clean_name] = mod
+        self.write_lock.release()
 
     def fetch_mods(self):
         refresh_time = datetime.timedelta(minutes=5)
@@ -58,18 +68,17 @@ class ModList:
         self.last_online_fetched = datetime.datetime.now()
 
         if env.DECOMPILE_THUNDERSTORE_MODS:
-            if self.decompile_thread is None or not self.decompile_thread.is_alive():
-                logging.info("Start decompile thread")
-                self.decompile_thread = threading.Thread(target=decompile.fetch_mods, name="Decompile",
-                                                         args=(self.file_lock,), daemon=True)
-                self.decompile_thread.start()
-            else:
-                logging.info("Decompile thread is already running")
+            self.run_decompile_thread()
+            return
 
-            thunder_mods = []
-        else:
+        self.update_mod_list()
+
+    def update_mod_list(self):
+        if not env.DECOMPILE_THUNDERSTORE_MODS:
             logging.info("Fetching Thunderstore ...")
             thunder_mods = thunderstore.fetch_online()
+        else:
+            thunder_mods = []
 
         logging.info("Fetching Nexus ...")
         nexus_mods = nexus.fetch_online()
@@ -77,6 +86,7 @@ class ModList:
         logging.info("Adding mods ...")
 
         decompiled_mods = decompile.read_extracted_mod_from_file(self.read_lock)
+
         for online_mod_key in decompiled_mods:
             online_mod = decompiled_mods[online_mod_key]
             mod_updated = self.parse_thunder_created_date(online_mod["date"])
@@ -101,4 +111,15 @@ class ModList:
             self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated), True)
 
         logging.info("All mods updated")
-        return self.mods_online
+
+    def decompile_mods(self):
+        decompile.fetch_mods(self.file_lock)
+        self.update_mod_list()
+
+    def run_decompile_thread(self):
+        if self.decompile_thread is None or not self.decompile_thread.is_alive():
+            logging.info("Start decompile thread")
+            self.decompile_thread = threading.Thread(target=self.decompile_mods, name="Decompile", daemon=True)
+            self.decompile_thread.start()
+        else:
+            logging.info("Decompile thread is already running")

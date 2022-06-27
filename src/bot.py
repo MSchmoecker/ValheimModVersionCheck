@@ -1,4 +1,7 @@
+import functools
 import io
+import time
+
 import discord
 import requests
 import logging
@@ -14,6 +17,7 @@ def run(file_lock: RWLockRead):
 
     @tasks.loop(hours=1)
     async def fetch_mods():
+        await wait_non_blocking(seconds=5)
         modlist.fetch_mods()
 
     fetch_mods.start()
@@ -91,7 +95,7 @@ def run(file_lock: RWLockRead):
         mods_local = parse_local(log, True)
         logging.info("done")
 
-        response = compare_mods(mods_local, modlist.mods_online)
+        response = compare_mods(mods_local, modlist.get_online_mods())
         errors = fetch_errors(log)
 
         if silent_on_no_findings and len(response) == 0:
@@ -137,5 +141,9 @@ def run(file_lock: RWLockRead):
         await message.channel.send(msg, file=response_file)
 
         modlist.fetch_mods()
+
+    async def wait_non_blocking(seconds):
+        func = functools.partial(time.sleep, seconds)
+        return await client.loop.run_in_executor(None, func)
 
     client.run(env.DISCORD_TOKEN)
