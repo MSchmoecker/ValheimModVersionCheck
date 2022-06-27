@@ -80,6 +80,7 @@ def run(file_lock: RWLockRead):
         try:
             attachment_url = attachments[0].url
             r = requests.get(attachment_url)
+            r.encoding = 'utf-8'
             return r.text
         except Exception as e:
             logging.exception(f"Failed to get log from attachment: {e}")
