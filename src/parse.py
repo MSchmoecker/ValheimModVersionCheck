@@ -51,7 +51,7 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
             result += f"\tis outdated {mod_version} -> {mods_online[mod].version}\n"
 
         if old:
-            result += f"\tis older then one year ({mods_online[mod].updated.strftime('%Y-%m-%d %H:%M:%S')})\n"
+            result += f"\tis older than one year ({mods_online[mod].updated.strftime('%Y-%m-%d %H:%M:%S')})\n"
 
         if mod_version > mods_online[mod].version:
             continue
