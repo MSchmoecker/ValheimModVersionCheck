@@ -91,7 +91,6 @@ def run(file_lock: RWLockRead):
         mods_local = parse_local(log, True)
         logging.info("done")
 
-        modlist.fetch_mods()
         response = compare_mods(mods_local, modlist.mods_online)
         errors = fetch_errors(log)
 
