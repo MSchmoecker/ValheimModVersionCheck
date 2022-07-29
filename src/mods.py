@@ -117,6 +117,9 @@ class ModList:
 
         logging.info("All mods updated")
 
+    def get_decompiled_mods(self):
+        return decompile.read_extracted_mod_from_file(self.read_lock)
+
     def decompile_mods(self):
         decompile.fetch_mods(self.file_lock)
         self.update_mod_list()

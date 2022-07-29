@@ -1,5 +1,6 @@
 import functools
 import io
+import json
 import time
 
 import discord
@@ -54,9 +55,21 @@ def run(file_lock: RWLockRead):
                 await on_modlist(message, logs)
             return
 
+        if message.content == "!thunderstore mods":
+            logging.info("")
+            logging.info("Got request !indexed mods")
+
+            await send_indexed_mods(message)
+            return
+
         logs = await _get_logs_from_attachment(message, message.attachments, True)
         if logs is not None:
             await on_checkmods(message, message, logs, True)
+
+    async def send_indexed_mods(message):
+        decompiled_mods = modlist.get_decompiled_mods()
+        response_decompiled_mods = make_file(json.dumps(decompiled_mods, indent=4, sort_keys=True), "mods.json")
+        await message.channel.send("Mods", file=response_decompiled_mods)
 
     async def get_logs(message, command_name, silent=False) -> Optional[List[str]]:
         if message.reference is None:

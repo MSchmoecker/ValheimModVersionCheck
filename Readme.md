@@ -6,7 +6,8 @@ A ~~simple~~ over-engineered discord bot that reads mod versions from a logfile 
 ## Quick Usage
 Invite this bot to your server using this [link](https://discord.com/api/oauth2/authorize?client_id=972794598856474664&permissions=100352&scope=bot).\
 The discord commands `!checkmods` and `!modlist` are added.
-Reply to a message that contains a logfile with either of the commands.
+Reply to a message that contains a logfile with either of the commands.\
+Use `!thunderstore mods` to see all extracted mods the bot uses.
 
 ![example](Docs/DiscordExample.png)
 
