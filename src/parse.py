@@ -43,9 +43,13 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
 
         outdated = mod_version < mods_online[mod].version
         old = mods_online[mod].updated < time_threshold
+        deprecated = mods_online[mod].deprecated
 
-        if outdated or old:
+        if outdated or old or deprecated:
             result += f"{original_name}\n"
+
+        if deprecated:
+            result += f"\tis deprecated\n"
 
         if outdated:
             result += f"\tis outdated {mod_version} -> {mods_online[mod].version}\n"

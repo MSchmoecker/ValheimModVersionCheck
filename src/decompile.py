@@ -25,11 +25,14 @@ def fetch_mods(file_lock: RWLockRead):
         online_mod_version = mod["versions"][0]["version_number"]
         download_url = mod["versions"][0]["download_url"]
         date_created = mod["versions"][0]["date_created"]
+        is_deprecated = mod["is_deprecated"]
 
         if online_name != "BepInExPack_Valheim" and online_name != "r2modman":
-            if online_mod_name in decompiled_mods \
-                    and online_mod_version == decompiled_mods[online_mod_name]["online_version"]:
-                continue
+            if online_mod_name in decompiled_mods:
+                decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
+
+                if online_mod_version == decompiled_mods[online_mod_name]["online_version"]:
+                    continue
 
             plugins = extract_mod_metadata(online_mod_name, online_mod_version, download_url)
 
@@ -41,6 +44,7 @@ def fetch_mods(file_lock: RWLockRead):
                 decompiled_mods[online_mod_name]["online_name"] = online_mod_name
                 decompiled_mods[online_mod_name]["online_version"] = online_mod_version
                 decompiled_mods[online_mod_name]["date"] = date_created
+                decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
 
                 if "mods" not in decompiled_mods[online_mod_name]:
                     decompiled_mods[online_mod_name]["mods"] = {}
@@ -62,6 +66,9 @@ def fetch_mods(file_lock: RWLockRead):
 
             finally:
                 write_lock.release()
+
+    with open(decompiled_mods_file_path, "w") as f:
+        json.dump(decompiled_mods, f, indent=4)
 
     logging.info("Fetching Thunderstore done")
 

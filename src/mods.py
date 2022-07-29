@@ -14,12 +14,14 @@ class Mod:
     clean_name: str
     version: version
     updated: datetime.datetime
+    deprecated: bool
 
-    def __init__(self, name: str, mod_version: str, updated: datetime.datetime):
+    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool):
         self.name = name
         self.clean_name = clean_name(name).lower()
         self.version = version.parse(mod_version)
         self.updated = updated
+        self.deprecated = deprecated
 
 
 class ModList:
@@ -53,7 +55,8 @@ class ModList:
             if not soft_add and mod.version > self._mods_online[mod.clean_name].version:
                 self._mods_online[mod.clean_name] = mod
             elif mod.version == self._mods_online[mod.clean_name].version:
-                self._mods_online[mod.clean_name].updated = min(mod.updated, self._mods_online[mod.clean_name].updated)
+                if mod.updated < self._mods_online[mod.clean_name].updated:
+                    self._mods_online[mod.clean_name] = mod
         else:
             self._mods_online[mod.clean_name] = mod
         self.write_lock.release()
@@ -90,17 +93,19 @@ class ModList:
         for online_mod_key in decompiled_mods:
             online_mod = decompiled_mods[online_mod_key]
             mod_updated = self.parse_thunder_created_date(online_mod["date"])
+            deprecated = online_mod["is_deprecated"] if "is_deprecated" in online_mod else False
 
             for mod in online_mod["mods"]:
                 mod_name = online_mod["mods"][mod]["name"]
                 mod_version = online_mod["mods"][mod]["version"]
-                self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
+                self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated))
 
         for mod in thunder_mods:
             mod_name = mod["name"]
             mod_version = mod["versions"][0]["version_number"]
             mod_updated = self.parse_thunder_created_date(mod["versions"][0]["date_created"])
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated))
+            deprecated = mod["is_deprecated"]
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated))
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
@@ -108,7 +113,7 @@ class ModList:
             mod_name = mod["name"]
             mod_version = mod["version"]
             mod_updated = self.parse_nexus_created_date(mod["updated_time"])
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated), True)
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, False), True)
 
         logging.info("All mods updated")
 
