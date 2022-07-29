@@ -68,8 +68,11 @@ def run(file_lock: RWLockRead):
 
     async def send_indexed_mods(message):
         decompiled_mods = modlist.get_decompiled_mods()
+
+        msg = "This are the extracted mods from Thunderstore"
         response_decompiled_mods = make_file(json.dumps(decompiled_mods, indent=4, sort_keys=True), "mods.json")
-        await message.channel.send("Mods", file=response_decompiled_mods)
+
+        await message.channel.send(msg, file=response_decompiled_mods)
 
     async def get_logs(message, command_name, silent=False) -> Optional[List[str]]:
         if message.reference is None:
