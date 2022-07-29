@@ -36,7 +36,9 @@ def run(file_lock: RWLockRead):
         if env.DEBUG != (hasattr(message.channel, 'name') and message.channel.name == 'vmvc-debug-test'):
             return
 
-        if message.content == "!checkmods":
+        content: str = message.content
+
+        if content == "!checkmods":
             logging.info("")
             logging.info("Got request !checkmods")
 
@@ -45,7 +47,7 @@ def run(file_lock: RWLockRead):
                 await on_checkmods(message, message.reference, logs, False)
             return
 
-        if message.content == "!modlist":
+        if content == "!modlist":
             logging.info("")
             logging.info("Got request !modlist")
 
@@ -55,22 +57,27 @@ def run(file_lock: RWLockRead):
                 await on_modlist(message, logs)
             return
 
-        if message.content == "!thunderstore mods":
+        if content.startswith("!thunderstore mods"):
+            query = content[len("!thunderstore mods "):]
             logging.info("")
-            logging.info("Got request !indexed mods")
+            logging.info(f"Got request !indexed mods with query: {query}")
 
-            await send_indexed_mods(message)
+            await send_indexed_mods(message, query)
             return
 
         logs = await _get_logs_from_attachment(message, message.attachments, True)
         if logs is not None:
             await on_checkmods(message, message, logs, True)
 
-    async def send_indexed_mods(message):
-        decompiled_mods = modlist.get_decompiled_mods()
+    async def send_indexed_mods(message, query):
+        mods = modlist.get_decompiled_mods()
+
+        if len(query) > 0:
+            m: str
+            mods = {k: v for k, v in mods.items() if any([query in m for m in v["mods"]])}
 
         msg = "This are the extracted mods from Thunderstore"
-        response_decompiled_mods = make_file(json.dumps(decompiled_mods, indent=4, sort_keys=True), "mods.json")
+        response_decompiled_mods = make_file(json.dumps(mods, indent=4, sort_keys=True), "mods.json")
 
         await message.channel.send(msg, file=response_decompiled_mods)
 
