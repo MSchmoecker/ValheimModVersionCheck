@@ -19,6 +19,15 @@ def fetch_mods(file_lock: RWLockRead):
     read_lock = file_lock.gen_rlock()
     decompiled_mods = read_extracted_mod_from_file(read_lock)
 
+    mod_lookup = set()
+    for mod in thunder_mods:
+        mod_lookup.add(mod["full_name"])
+
+    for mod in list(decompiled_mods.keys()):
+        if mod not in mod_lookup:
+            logging.info(f"Removing {mod} from decompiled mods, not longer on Thunderstore")
+            del decompiled_mods[mod]
+
     for mod in thunder_mods:
         online_mod_name = mod["full_name"]
         online_name = mod["name"]
