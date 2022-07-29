@@ -46,16 +46,16 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
         deprecated = mods_online[mod].deprecated
 
         if outdated or old or deprecated:
-            result += f"{original_name}\n"
+            result += f"{original_name} {mod_version}\n"
 
         if deprecated:
             result += f"\tis deprecated\n"
 
         if outdated:
-            result += f"\tis outdated {mod_version} -> {mods_online[mod].version}\n"
+            result += f"\tis not up to date, {mods_online[mod].version} exists\n"
 
         if old:
-            result += f"\tis older than one year ({mods_online[mod].updated.strftime('%Y-%m-%d %H:%M:%S')})\n"
+            result += f"\tis older than one year (uploaded {mods_online[mod].updated.strftime('%Y-%m-%d')})\n"
 
         if mod_version > mods_online[mod].version:
             continue

@@ -153,8 +153,6 @@ def extract_bep_in_plugin(mod_name, mod_version, r):
                                         f"ilspycmd --no-dead-code --no-dead-stores -o \"{decompile_dir}\" \"{file_path}\"")
                                 except Exception as e:
                                     pass
-                                finally:
-                                    logging.info(f"decompile done {file_path}")
             finally:
                 os.unlink(tmpfile.name)
 

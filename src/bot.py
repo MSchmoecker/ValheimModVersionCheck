@@ -102,7 +102,6 @@ def run(file_lock: RWLockRead):
         for log in logs:
             logging.info("Parse attached file ... ")
             mods_local = parse_local(log, True)
-            logging.info("done")
 
             response = compare_mods(mods_local, modlist.get_online_mods())
             errors = fetch_errors(log)
@@ -111,7 +110,8 @@ def run(file_lock: RWLockRead):
                 return
 
             logging.info(
-                f"Send response with {len(response.splitlines())} outdated mods and {len(errors.splitlines())} errors")
+                f"Send response with {len(response.splitlines())} outdated mods lines "
+                f"and {len(errors.splitlines())} errors lines")
 
             if len(response) == 0 and len(errors) == 0:
                 await message.channel.send("No outdated or old mods found. No errors found.",
@@ -123,7 +123,11 @@ def run(file_lock: RWLockRead):
             response_files = [f for f in [response_file_outdated_mods, response_file_errors] if f is not None]
 
             msg = "Here you go! " \
-                  "A version might not exist if the mod is only available on NexusMods or the name is ambiguous. "
+                  "This is an automated check of your mods to quickly identify common problems.\n" \
+                  "A flagged mod update may not exist if the mod is only available on NexusMods, " \
+                  "the name is ambiguous or a beta version has been uploaded to Thunderstore.\n" \
+                  "Take it with a grain of salt."
+
             if len(response) == 0:
                 msg += "No outdated or old mods found. "
             if len(errors) == 0:
