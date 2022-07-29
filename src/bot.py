@@ -136,16 +136,21 @@ def run(file_lock: RWLockRead):
         tmp = io.StringIO(content)
         return discord.File(tmp, filename=filename)
 
+    def get_modlist(mods_local):
+        mod_list_text = ""
+
+        for mod in sorted(mods_local.values(), key=lambda x: x["original_name"].lower()):
+            mod_list_text += f'{mod["original_name"]} {mod["version"]}\n'
+
+        return mod_list_text
+
     async def on_modlist(message, logs):
         for log in logs:
             logging.info("Parse attached file ... ")
             mods_local = parse_local(log, True)
             logging.info("done")
 
-            response = ""
-
-            for mod in sorted(mods_local.values(), key=lambda x: x["original_name"].lower()):
-                response += f'{mod["original_name"]} {mod["version"]}\n'
+            response = get_modlist(mods_local)
 
             tmp = io.StringIO(response)
             response_file = discord.File(tmp, filename="mods.txt")
