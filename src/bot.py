@@ -73,8 +73,21 @@ def run(file_lock: RWLockRead):
         mods = modlist.get_decompiled_mods()
 
         if len(query) > 0:
-            m: str
-            mods = {k: v for k, v in mods.items() if any([query in m for m in v["mods"]])}
+            query = query.lower()
+            result: dict = {}
+
+            for mod_key in mods.keys():
+                mod: dict = mods[mod_key]
+
+                if query in mod["online_name"].lower():
+                    result[mod_key] = mod
+                    continue
+
+                if any(query in m.lower() or query in mod["mods"][m]["name"].lower() for m in mod["mods"]):
+                    result[mod_key] = mod
+                    continue
+
+            mods = result
 
         msg = "This are the extracted mods from Thunderstore"
         response_decompiled_mods = make_file(json.dumps(mods, indent=4, sort_keys=True), "mods.json")
