@@ -49,16 +49,26 @@ class ModList:
     def parse_nexus_created_date(date):
         return datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f%z").replace(tzinfo=None)
 
+    def _can_add_mod(self, mod: Mod, soft_add=False):
+        if mod.clean_name not in self._mods_online:
+            return True
+
+        online_mod = self._mods_online[mod.clean_name]
+
+        if mod.version > online_mod.version and not soft_add and not mod.deprecated:
+            return True
+
+        if mod.version == online_mod.version and mod.updated < online_mod.updated:
+            return True
+
+        return False
+
     def _try_add_online_mod(self, mod: Mod, soft_add=False):
         self.write_lock.acquire()
-        if mod.clean_name in self._mods_online:
-            if not soft_add and mod.version > self._mods_online[mod.clean_name].version:
-                self._mods_online[mod.clean_name] = mod
-            elif mod.version == self._mods_online[mod.clean_name].version:
-                if mod.updated < self._mods_online[mod.clean_name].updated:
-                    self._mods_online[mod.clean_name] = mod
-        else:
+
+        if self._can_add_mod(mod, soft_add):
             self._mods_online[mod.clean_name] = mod
+
         self.write_lock.release()
 
     def fetch_mods(self):

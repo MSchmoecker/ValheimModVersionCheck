@@ -148,7 +148,7 @@ def extract_bep_in_plugin(mod_name, mod_version, r):
                             if file.endswith(".dll"):
                                 file_path = os.path.join(root, file)
                                 try:
-                                    logging.info(f"decompiling    {file_path}...")
+                                    logging.info(f"decompiling {file_path}...")
                                     os.system(
                                         f"ilspycmd --no-dead-code --no-dead-stores -o \"{decompile_dir}\" \"{file_path}\"")
                                 except Exception as e:
