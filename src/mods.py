@@ -15,13 +15,15 @@ class Mod:
     version: version
     updated: datetime.datetime
     deprecated: bool
+    url: str
 
-    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool):
+    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, url: str):
         self.name = name
         self.clean_name = clean_name(name).lower()
         self.version = version.parse(mod_version)
         self.updated = updated
         self.deprecated = deprecated
+        self.url = url
 
 
 class ModList:
@@ -105,17 +107,20 @@ class ModList:
             mod_updated = self.parse_thunder_created_date(online_mod["date"])
             deprecated = online_mod["is_deprecated"] if "is_deprecated" in online_mod else False
 
-            for mod in online_mod["mods"]:
-                mod_name = online_mod["mods"][mod]["name"]
-                mod_version = online_mod["mods"][mod]["version"]
-                self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated))
+            for mod_key in online_mod["mods"]:
+                mod = online_mod["mods"][mod_key]
+                mod_name = mod["name"]
+                mod_version = mod["version"]
+                url = online_mod["url"] if "url" in online_mod else ""
+                self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, url))
 
         for mod in thunder_mods:
             mod_name = mod["name"]
             mod_version = mod["versions"][0]["version_number"]
             mod_updated = self.parse_thunder_created_date(mod["versions"][0]["date_created"])
             deprecated = mod["is_deprecated"]
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated))
+            url = mod["package_url"]
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, url))
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
@@ -123,7 +128,8 @@ class ModList:
             mod_name = mod["name"]
             mod_version = mod["version"]
             mod_updated = self.parse_nexus_created_date(mod["updated_time"])
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, False), True)
+            url = f"https://www.nexusmods.com/valheim/mods/{mod['mod_id']}"
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, False, url), True)
 
         logging.info("All mods updated")
 

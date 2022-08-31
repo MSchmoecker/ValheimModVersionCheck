@@ -35,10 +35,12 @@ def fetch_mods(file_lock: RWLockRead):
         download_url = mod["versions"][0]["download_url"]
         date_created = mod["versions"][0]["date_created"]
         is_deprecated = mod["is_deprecated"]
+        url = mod["package_url"]
 
         if online_name != "BepInExPack_Valheim" and online_name != "r2modman":
             if online_mod_name in decompiled_mods:
                 decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
+                decompiled_mods[online_mod_name]["url"] = url
 
                 if online_mod_version == decompiled_mods[online_mod_name]["online_version"]:
                     continue
@@ -54,6 +56,7 @@ def fetch_mods(file_lock: RWLockRead):
                 decompiled_mods[online_mod_name]["online_version"] = online_mod_version
                 decompiled_mods[online_mod_name]["date"] = date_created
                 decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
+                decompiled_mods[online_mod_name]["url"] = url
 
                 if "mods" not in decompiled_mods[online_mod_name]:
                     decompiled_mods[online_mod_name]["mods"] = {}
