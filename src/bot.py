@@ -13,7 +13,7 @@ from typing import Optional, List
 
 
 def run(file_lock: RWLockRead):
-    client = discord.Client(intents=discord.Intents.default())
+    client = discord.Client()
     modlist: ModList = ModList(file_lock)
     modlist.update_mod_list()
 
