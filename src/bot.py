@@ -6,9 +6,12 @@ import time
 import discord
 import requests
 import logging
+
+from discord import Message
+from discord.ext import tasks
+
 from readerwriterlock.rwlock import RWLockRead
 from src import ModList, parse_local, compare_mods, fetch_errors, env
-from discord.ext import commands, tasks
 from typing import Optional, List
 
 
@@ -29,7 +32,7 @@ def run(file_lock: RWLockRead):
         logging.info(f'{client.user} has connected to Discord!')
 
     @client.event
-    async def on_message(message):
+    async def on_message(message: Message):
         if message.author == client.user:
             return
 
@@ -63,6 +66,18 @@ def run(file_lock: RWLockRead):
             logging.info(f"Got request !indexed mods with query: {query}")
 
             await send_indexed_mods(message, query)
+            return
+
+        if content.startswith("!postlog"):
+            split = content.split(" ")
+            query = content[len(split[0]):]
+            await send_post_log_instructions(message, query)
+            return
+
+        if content.startswith("!post log"):
+            split = content.split(" ")
+            query = content[len(split[0]) + len(split[1]) + 1:]
+            await send_post_log_instructions(message, query)
             return
 
         logs = await _get_logs_from_attachment(message, message.attachments, True)
@@ -196,6 +211,24 @@ def run(file_lock: RWLockRead):
             response_file = discord.File(tmp, filename="mods.txt")
             msg = "Here you go!"
             await message.channel.send(msg, file=response_file)
+
+    async def send_post_log_instructions(message: Message, query: str):
+        query = query.strip()
+
+        if not query.endswith("."):
+            query += "."
+
+        if len(query) <= 1:
+            query = ""
+        else:
+            query += " "
+
+        msg = "Please send your log file. " + query + \
+              "It can be found at `BepInEx/LogOutput.log`\n" \
+              "If you are using r2modman or Thunderstore Mod Manager open the folder with " \
+              "'Settings > Browse profile folder'"
+
+        await message.channel.send(msg, reference=message.reference)
 
     async def wait_non_blocking(seconds):
         func = functools.partial(time.sleep, seconds)
