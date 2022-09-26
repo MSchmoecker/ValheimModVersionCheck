@@ -68,4 +68,6 @@ def clean_name(name: str) -> str:
         return "Construction"
     if cleaned == "TrashItemsMod":
         return "TrashItems"
+    if cleaned == "JotunntheValheimLibrary":
+        return "Jotunn"
     return cleaned

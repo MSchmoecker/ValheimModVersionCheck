@@ -1,7 +1,7 @@
 import datetime
 import logging
 import threading
-from typing import Dict
+from typing import Dict, List
 
 from readerwriterlock.rwlock import RWLockRead
 
@@ -15,7 +15,7 @@ class Mod:
     version: version
     updated: datetime.datetime
     deprecated: bool
-    url: str
+    urls: List[str]
 
     def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, url: str):
         self.name = name
@@ -23,7 +23,7 @@ class Mod:
         self.version = version.parse(mod_version)
         self.updated = updated
         self.deprecated = deprecated
-        self.url = url
+        self.urls = [url]
 
 
 class ModList:
@@ -67,6 +67,15 @@ class ModList:
 
     def _try_add_online_mod(self, mod: Mod, soft_add=False):
         self.write_lock.acquire()
+
+        if mod.clean_name in self._mods_online:
+            same_version = self._mods_online[mod.clean_name].version == mod.version
+            if same_version:
+                urls = self._mods_online[mod.clean_name].urls + mod.urls
+                distinct_urls = list(set(urls))
+                distinct_urls.sort()
+                self._mods_online[mod.clean_name].urls = distinct_urls
+                mod.urls = distinct_urls
 
         if self._can_add_mod(mod, soft_add):
             self._mods_online[mod.clean_name] = mod

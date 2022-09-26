@@ -52,7 +52,9 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
             result += f"\tis deprecated\n"
 
         if outdated:
-            result += f"\tis likely outdated, version {mods_online[mod].version} exists: {mods_online[mod].url}\n"
+            result += f"\tis likely outdated, version {mods_online[mod].version} exists:\n"
+            for url in mods_online[mod].urls:
+                result += f"\t\t{url}\n"
 
         if old:
             result += f"\tis older than one year (uploaded {mods_online[mod].updated.strftime('%Y-%m-%d')})\n"
