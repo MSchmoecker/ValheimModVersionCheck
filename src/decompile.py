@@ -57,9 +57,7 @@ def fetch_mods(file_lock: RWLockRead):
                 decompiled_mods[online_mod_name]["date"] = date_created
                 decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
                 decompiled_mods[online_mod_name]["url"] = url
-
-                if "mods" not in decompiled_mods[online_mod_name]:
-                    decompiled_mods[online_mod_name]["mods"] = {}
+                decompiled_mods[online_mod_name]["mods"] = {}
 
                 if plugins is not None:
                     for arguments in plugins:
