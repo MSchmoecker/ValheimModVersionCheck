@@ -43,14 +43,15 @@ def get_highest_id_of_updated_mods():
     if r.status_code == 200:
         return max(r.json(), key=lambda x: x['mod_id'])['mod_id']
 
-    raise Exception("Failed to fetch updated mods with status code", r.status_code)
+    logging.error(f"Failed to fetch updated mods with status code {r.status_code}")
 
 
 def add_new_mods(mods):
     highest_id = get_highest_id_of_updated_mods()
 
-    for mod_id in range(0, highest_id):
-        _fetch_mod(mods, mod_id + 1)
+    if highest_id:
+        for mod_id in range(0, highest_id):
+            _fetch_mod(mods, mod_id + 1)
 
 
 def update_mods(mods):
@@ -59,7 +60,8 @@ def update_mods(mods):
     if r.status_code == 200:
         updated = r.json()
     else:
-        raise Exception("Failed to fetch updated mods with status code", r.status_code)
+        logging.error(f"Failed to fetch updated mods with status code {r.status_code}")
+        return
 
     for mod in updated:
         mod_id = str(mod['mod_id'])
