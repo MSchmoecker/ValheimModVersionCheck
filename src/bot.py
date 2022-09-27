@@ -174,10 +174,11 @@ def run(file_lock: RWLockRead):
             response_files = [f for f in [response_file_outdated_mods, response_file_errors] if f is not None]
 
             msg = "Here you go! " \
-                  "This is an automated check of your mods to quickly identify common problems.\n" \
+                  "This is an automated check to quickly identify common problems. " \
+                  "You can also DM me with log files.\n" \
                   "A flagged mod update may not exist if the mod is only available on NexusMods, " \
                   "the name is ambiguous or a beta version has been uploaded to Thunderstore.\n" \
-                  "Take it with a grain of salt."
+                  "Take it with a grain of salt. "
 
             if len(response) == 0:
                 msg += "No outdated or old mods found. "
