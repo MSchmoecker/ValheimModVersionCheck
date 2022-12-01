@@ -39,11 +39,17 @@ def _fetch_mod(mods, mod_id, force=False):
 
 
 def get_highest_id_of_updated_mods():
-    r = requests.get(updated_route(), headers={'apikey': env.NEXUS_API_KEY})
+    try:
+        r = requests.get(updated_route(), headers={'apikey': env.NEXUS_API_KEY})
+    except Exception as e:
+        logging.exception(f"Failed to fetch updated nexus mods: {e}")
+        return None
+
     if r.status_code == 200:
         return max(r.json(), key=lambda x: x['mod_id'])['mod_id']
 
     logging.error(f"Failed to fetch updated mods with status code {r.status_code}")
+    return None
 
 
 def add_new_mods(mods):
@@ -55,7 +61,11 @@ def add_new_mods(mods):
 
 
 def update_mods(mods):
-    r = requests.get(updated_route(), headers={'apikey': env.NEXUS_API_KEY})
+    try:
+        r = requests.get(updated_route(), headers={'apikey': env.NEXUS_API_KEY})
+    except Exception as e:
+        logging.exception(f"Failed to fetch updated nexus mods: {e}")
+        return
 
     if r.status_code == 200:
         updated = r.json()
