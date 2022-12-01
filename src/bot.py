@@ -1,3 +1,4 @@
+import datetime
 import functools
 import io
 import json
@@ -11,7 +12,7 @@ from discord import Message
 from discord.ext import tasks
 
 from readerwriterlock.rwlock import RWLockRead
-from src import ModList, parse_local, compare_mods, fetch_errors, env
+from src import ModList, parse_local, compare_mods, fetch_errors, env, merge_errors
 from typing import Optional, List
 
 
@@ -157,21 +158,26 @@ def run(file_lock: RWLockRead):
             response = compare_mods(mods_local, modlist.get_online_mods())
             errors = fetch_errors(log)
 
-            if silent_on_no_findings and len(response) == 0 and len(errors) == 0:
+            time_watch = datetime.datetime.now()
+            merged_errors = merge_errors(errors)
+            logging.info(F"Merged errors in {datetime.datetime.now() - time_watch}")
+
+            if silent_on_no_findings and len(response) == 0 and len(merged_errors) == 0:
                 return
 
             logging.info(
                 f"Send response with {len(response.splitlines())} outdated mods lines "
-                f"and {len(errors.splitlines())} errors lines")
+                f"and {len(merged_errors.splitlines())} errors lines")
 
-            if len(response) == 0 and len(errors) == 0:
+            if len(response) == 0 and len(merged_errors) == 0:
                 await message.channel.send("No outdated or old mods found. No errors found.",
                                            reference=original_message)
                 return
 
             response_file_outdated_mods = make_file(response, "mods.txt")
-            response_file_errors = make_file(errors, "errors.txt")
-            response_files = [f for f in [response_file_outdated_mods, response_file_errors] if f is not None]
+            response_file_errors = make_file(merged_errors, "errors.txt")
+            response_files = [response_file_outdated_mods, response_file_errors]
+            response_files = [f for f in response_files if f is not None]
 
             msg = "Here you go! " \
                   "This is an automated check to quickly identify common problems. " \

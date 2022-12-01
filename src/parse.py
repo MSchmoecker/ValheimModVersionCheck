@@ -86,7 +86,7 @@ def fetch_errors(log):
             was_in_warning = False
 
         if is_in_error or line.startswith("[Error"):
-            if was_in_warning:
+            if was_in_warning or not is_in_error:
                 errors += "\n"
                 was_in_warning = False
             errors += f"{line}\n"
@@ -96,4 +96,41 @@ def fetch_errors(log):
             errors += f"{line}\n"
             was_in_warning = True
 
-    return errors
+    return errors.replace("\n\n\n", "\n\n")
+
+
+def merge_errors(errors) -> str:
+    result = ""
+    max_length = 50
+    lines = errors.splitlines()
+    skip = 0
+
+    for i1, error in enumerate(lines):
+        if skip > 0:
+            skip -= 1
+            continue
+        for i2, line in enumerate(lines[i1 + 1:i1 + max_length]):
+            if error == line:
+                end_pos = i1 + 1 + i2
+                length = end_pos - i1
+                block1 = lines[i1:end_pos]
+                block2 = lines[end_pos:end_pos + length]
+                duplicates = 1
+
+                while block1 == block2:
+                    end_pos += length
+                    block2 = lines[end_pos:end_pos + length]
+                    duplicates += 1
+
+                if duplicates > 1 and len(block1) * duplicates >= 3:
+                    header = f"----- {duplicates}x -----"
+                    result += "\n" + header + "\n"
+                    result += "\n".join(block1).strip() + "\n"
+                    result += "-" * len(header) + "\n\n"
+                    skip = length * duplicates - 1
+                    break
+        if skip > 0:
+            continue
+        result += error + "\n"
+
+    return result.replace("\n\n\n", "\n\n")
