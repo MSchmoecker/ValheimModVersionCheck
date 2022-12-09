@@ -62,6 +62,9 @@ def run(file_lock: RWLockRead):
                 await on_modlist(message, logs)
             return
 
+        if content.startswith("!find faulty"):
+            await send_detect_mods_instructions(message)
+
         if content.startswith("!thunderstore mods"):
             query = content[len("!thunderstore mods "):]
             logging.info("")
@@ -233,6 +236,9 @@ def run(file_lock: RWLockRead):
 
     async def send_post_log_instructions(message: Message):
         await message.channel.send(get_user_message("post_log_instructions"))
+
+    async def send_detect_mods_instructions(message):
+        await message.channel.send(get_user_message("detect_mods_instructions"))
 
     async def wait_non_blocking(seconds):
         func = functools.partial(time.sleep, seconds)
