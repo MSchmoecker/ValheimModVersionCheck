@@ -2,6 +2,7 @@ import datetime
 import functools
 import io
 import json
+import os
 import time
 
 import discord
@@ -69,16 +70,8 @@ def run(file_lock: RWLockRead):
             await send_indexed_mods(message, query)
             return
 
-        if content.startswith("!postlog"):
-            split = content.split(" ")
-            query = content[len(split[0]):]
-            await send_post_log_instructions(message, query)
-            return
-
-        if content.startswith("!post log"):
-            split = content.split(" ")
-            query = content[len(split[0]) + len(split[1]) + 1:]
-            await send_post_log_instructions(message, query)
+        if content.startswith("!postlog") or content.startswith("!post log"):
+            await send_post_log_instructions(message)
             return
 
         logs = await _get_logs_from_attachment(message, message.attachments, True)
@@ -219,23 +212,27 @@ def run(file_lock: RWLockRead):
             msg = "Here you go!"
             await message.channel.send(msg, file=response_file)
 
-    async def send_post_log_instructions(message: Message, query: str):
-        query = query.strip()
+    def get_user_message(key):
+        path = os.path.join("data", "user_messages.json")
 
-        if not query.endswith("."):
-            query += "."
+        if not os.path.exists(path):
+            logging.warning(f"File {path} does not exist")
+            return "Failed to load user messages"
 
-        if len(query) <= 1:
-            query = ""
-        else:
-            query += " "
+        with open(path, "r+") as f:
+            try:
+                messages = json.load(f)
+            except json.decoder.JSONDecodeError as e:
+                logging.warning(f"Failed to load messages.json {e}")
+                return "Failed to load user messages"
 
-        msg = "Please send your log file. " + query + \
-              "It can be found at `BepInEx/LogOutput.log`\n" \
-              "If you are using r2modman or Thunderstore Mod Manager open the folder with " \
-              "'Settings > Browse profile folder'"
+            if key in messages:
+                return messages[key]
+            else:
+                return f"message is not configured in user messages"
 
-        await message.channel.send(msg, reference=message.reference)
+    async def send_post_log_instructions(message: Message):
+        await message.channel.send(get_user_message("post_log_instructions"))
 
     async def wait_non_blocking(seconds):
         func = functools.partial(time.sleep, seconds)
