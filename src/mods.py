@@ -129,7 +129,7 @@ class ModList:
             mod_updated = self.parse_thunder_created_date(mod["versions"][0]["date_created"])
             deprecated = mod["is_deprecated"]
             url = mod["package_url"]
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, url))
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, url), True)
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
