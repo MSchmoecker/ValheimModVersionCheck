@@ -3,6 +3,8 @@ import os
 import requests
 import logging
 from pathlib import Path
+
+import app_version
 from src import env
 
 
@@ -13,6 +15,12 @@ def mod_route(mod_id):
 def updated_route():
     return f"https://api.nexusmods.com/v1/games/valheim/mods/updated.json?period=1m"
 
+
+default_headers = {
+    'apikey': env.NEXUS_API_KEY,
+    "Application-Name": "Valheim Mod Version Check",
+    "Application-Version": str(app_version.app_version)
+}
 
 file_path = Path("data/nexus_mods.json")
 
@@ -26,7 +34,7 @@ def _fetch_mod(mods, mod_id, force=False):
     else:
         logging.info(f"Updating mod from Nexus with id {mod_id}")
 
-    r = requests.get(mod_route(mod_id), headers={'apikey': env.NEXUS_API_KEY})
+    r = requests.get(mod_route(mod_id), headers={**default_headers})
 
     if r.status_code == 200:
         mods[str(mod_id)] = r.json()
@@ -40,7 +48,7 @@ def _fetch_mod(mods, mod_id, force=False):
 
 def get_highest_id_of_updated_mods():
     try:
-        r = requests.get(updated_route(), headers={'apikey': env.NEXUS_API_KEY})
+        r = requests.get(updated_route(), headers={**default_headers})
     except Exception as e:
         logging.exception(f"Failed to fetch updated nexus mods: {e}")
         return None
@@ -62,7 +70,7 @@ def add_new_mods(mods):
 
 def update_mods(mods):
     try:
-        r = requests.get(updated_route(), headers={'apikey': env.NEXUS_API_KEY})
+        r = requests.get(updated_route(), headers={**default_headers})
     except Exception as e:
         logging.exception(f"Failed to fetch updated nexus mods: {e}")
         return
