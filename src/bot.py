@@ -13,11 +13,14 @@ from discord import Message
 from discord.ext import tasks
 
 from readerwriterlock.rwlock import RWLockRead
+
+import app_version
 from src import ModList, parse_local, compare_mods, fetch_errors, env, merge_errors
 from typing import Optional, List
 
 
 def run(file_lock: RWLockRead):
+    logging.info(f"Starting Valheim Version Check {app_version.app_version}")
     client = discord.Client()
     modlist: ModList = ModList(file_lock)
     modlist.update_mod_list()
