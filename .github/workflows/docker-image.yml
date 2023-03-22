@@ -2,13 +2,17 @@ name: ci
 
 on:
   push:
-    branches:
-      - 'master'
+    tags:
+      - "v*"
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - name: Set up variables
+        id: vars
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -22,4 +26,4 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: maxschmoecker/valheim-mod-version-check:latest
+          tags: maxschmoecker/valheim-mod-version-check:latest,maxschmoecker/valheim-mod-version-check:${{ steps.vars.outputs.VERSION }}
