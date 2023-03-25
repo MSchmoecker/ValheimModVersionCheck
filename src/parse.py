@@ -85,7 +85,7 @@ def fetch_errors(log):
             is_in_error = False
             was_in_warning = False
 
-        if is_in_error or line.startswith("[Error"):
+        if is_in_error or line.startswith("[Error") or line.startswith("[Fatal"):
             if was_in_warning or not is_in_error:
                 errors += "\n"
                 was_in_warning = False
