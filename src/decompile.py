@@ -37,7 +37,7 @@ def fetch_mods(file_lock: RWLockRead):
         is_deprecated = mod["is_deprecated"]
         url = mod["package_url"]
 
-        if online_name != "BepInExPack_Valheim" and online_name != "r2modman":
+        if online_name != "r2modman":
             if online_mod_name in decompiled_mods:
                 decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
                 decompiled_mods[online_mod_name]["url"] = url
