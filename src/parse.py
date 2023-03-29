@@ -79,13 +79,13 @@ def fetch_errors(log):
             is_in_error = False
             continue
 
-        if line.startswith("[Info"):
+        if line.startswith("[Info") or line.startswith("[Debug") or line.startswith("[Message"):
             if is_in_error:
                 errors += "\n"
             is_in_error = False
             was_in_warning = False
 
-        if is_in_error or line.startswith("[Error") or line.startswith("[Fatal"):
+        if is_in_error or line.startswith("[Error") or line.startswith("[Fatal") or "Exception in ZRpc::HandlePackage:" in line:
             if was_in_warning or not is_in_error:
                 errors += "\n"
                 was_in_warning = False
