@@ -18,9 +18,6 @@ def parse_local(local_text, is_logfile: bool):
         mod_original_name = "".join(line.split(" ")[:-1])
         mod_version = "".join(line.split(" ")[-1])
 
-        if mod_name == "valheimplus":
-            mod_version = mod_version[2:]
-
         mods[mod_name] = {
             "original_name": mod_original_name,
             "version": version.parse(mod_version)
