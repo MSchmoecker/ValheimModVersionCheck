@@ -1,14 +1,48 @@
 import datetime
 import logging
-from typing import Dict
+from typing import Dict, Optional
 from packaging import version
 from src import Mod, clean_name
 
 
-def parse_local(local_text, is_logfile: bool):
+class ParsedLog:
     mods = {}
+    valheim_version: Optional[version.Version] = None
+    bepinex_version: Optional[version.Version] = None
+    bepinex_thunderstore_version: Optional[version.Version] = None
+
+
+def parse_version(prefix: str, anywhere: bool, line: str) -> Optional[version.Version]:
+    if anywhere and prefix in line:
+        version_string = line.split(prefix)[1].strip().split(" ")[0]
+    elif line.startswith(prefix):
+        version_string = line.split(prefix)[1].strip().split(" ")[0]
+    else:
+        version_string = None
+
+    if version_string:
+        return version.parse(version_string)
+
+    return None
+
+
+def parse_local(local_text, is_logfile: bool) -> ParsedLog:
+    parsed_log = ParsedLog()
+
     lines = local_text.splitlines()
     for i, line in enumerate(lines):
+        if not parsed_log.valheim_version and line.startswith("[Info   : Unity Log] "):
+            search = ": Valheim version: "
+            parsed_log.valheim_version = parse_version(search, True, line)
+
+        if not parsed_log.bepinex_version:
+            search = "[Message:   BepInEx] BepInEx"
+            parsed_log.bepinex_version = parse_version(search, False, line)
+
+        if not parsed_log.bepinex_thunderstore_version:
+            search = "[Message:   BepInEx] User is running BepInExPack Valheim version"
+            parsed_log.bepinex_thunderstore_version = parse_version(search, False, line)
+
         if is_logfile:
             if not line.startswith("[Info   :   BepInEx] Loading ["):
                 continue
@@ -18,12 +52,12 @@ def parse_local(local_text, is_logfile: bool):
         mod_original_name = "".join(line.split(" ")[:-1])
         mod_version = "".join(line.split(" ")[-1])
 
-        mods[mod_name] = {
+        parsed_log.mods[mod_name] = {
             "original_name": mod_original_name,
             "version": version.parse(mod_version)
         }
 
-    return mods
+    return parsed_log
 
 
 def compare_mods(mods_local, mods_online: Dict[str, Mod]):

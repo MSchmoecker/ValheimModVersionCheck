@@ -154,7 +154,7 @@ def run(file_lock: RWLockRead):
             logging.info("Parse attached file ... ")
             mods_local = parse_local(log, True)
 
-            response = compare_mods(mods_local, modlist.get_online_mods())
+            response = compare_mods(mods_local.mods, modlist.get_online_mods())
             errors = fetch_errors(log)
 
             time_watch = datetime.datetime.now()
@@ -189,6 +189,14 @@ def run(file_lock: RWLockRead):
                 msg += "No outdated or old mods found. "
             if len(errors) == 0:
                 msg += "No errors found. "
+
+            msg += f"\nValheim version: {mods_local.valheim_version if mods_local.valheim_version else 'unknown'}, "
+
+            if mods_local.bepinex_thunderstore_version:
+                msg += f" BepInEx version: {mods_local.bepinex_thunderstore_version} from Thunderstore"
+            else:
+                msg += f" BepInEx version: {mods_local.bepinex_version if mods_local.bepinex_version else 'unknown'}"
+
             await message.channel.send(msg, files=response_files, reference=original_message)
 
     def make_file(content, filename):
@@ -211,7 +219,7 @@ def run(file_lock: RWLockRead):
             mods_local = parse_local(log, True)
             logging.info("done")
 
-            response = get_modlist(mods_local)
+            response = get_modlist(mods_local.mods)
 
             tmp = io.StringIO(response)
             response_file = discord.File(tmp, filename="mods.txt")
