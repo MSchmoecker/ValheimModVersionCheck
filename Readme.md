@@ -31,3 +31,7 @@ services:
 ## Development
 - Copy `.env.sample` to `.env` and set necessary values.
 - Run `docker-compose up --build` or `python app.py`
+
+
+## Changelog
+See [Changelog](CHANGELOG.md)
