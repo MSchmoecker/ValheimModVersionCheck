@@ -6,10 +6,11 @@ from src import Mod, clean_name
 
 
 class ParsedLog:
-    mods = {}
-    valheim_version: Optional[version.Version] = None
-    bepinex_version: Optional[version.Version] = None
-    bepinex_thunderstore_version: Optional[version.Version] = None
+    def __init__(self):
+        self.mods = {}
+        self.valheim_version: Optional[version.Version] = None
+        self.bepinex_version: Optional[version.Version] = None
+        self.bepinex_thunderstore_version: Optional[version.Version] = None
 
 
 def parse_version(prefix: str, anywhere: bool, line: str) -> Optional[version.Version]:
