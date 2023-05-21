@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1
+* Fixed parsed mod list was shared between different log files
+
 ## 0.2.0
 * Added Valheim and BepInEx version parsing from log and printing to the message
 
