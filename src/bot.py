@@ -9,7 +9,7 @@ import discord
 import requests
 import logging
 
-from discord import Message
+from discord import Message, ChannelType
 from discord.ext import tasks
 
 from readerwriterlock.rwlock import RWLockRead
@@ -148,7 +148,7 @@ def run(file_lock: RWLockRead):
             logging.exception(f"Failed to get log from attachment: {e}")
             return []
 
-    async def on_checkmods(message, original_message, logs, silent_on_no_findings):
+    async def on_checkmods(message: Message, original_message, logs, silent_on_no_findings):
         if not silent_on_no_findings and len(logs) == 0:
             await message.channel.send("No logs found")
             return
@@ -200,7 +200,16 @@ def run(file_lock: RWLockRead):
             else:
                 msg += f" BepInEx version: {mods_local.bepinex_version if mods_local.bepinex_version else 'unknown'}"
 
-            await message.channel.send(msg, files=response_files, reference=original_message)
+            channel = message.channel
+
+            if channel.guild and channel.permissions_for(channel.guild.me).create_public_threads:
+                thread = await channel.create_thread(name="Log Check",
+                                                     message=original_message,
+                                                     type=ChannelType.public_thread,
+                                                     auto_archive_duration=60)
+                await thread.send(msg, files=response_files)
+            else:
+                await channel.send(msg, files=response_files, reference=original_message)
 
     def make_file(content, filename):
         if content is None or len(content) == 0:
