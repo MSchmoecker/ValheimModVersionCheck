@@ -21,7 +21,9 @@ from typing import Optional, List
 
 def run(file_lock: RWLockRead):
     logging.info(f"Starting Valheim Version Check {app_version.app_version}")
-    client = discord.Client()
+    intents = discord.Intents.default()
+    intents.message_content = True
+    client = discord.Client(intents=intents)
     modlist: ModList = ModList(file_lock)
     modlist.update_mod_list()
 
@@ -30,11 +32,12 @@ def run(file_lock: RWLockRead):
         await wait_non_blocking(seconds=10)
         modlist.fetch_mods()
 
-    fetch_mods.start()
-
     @client.event
     async def on_ready():
         logging.info(f'{client.user} has connected to Discord!')
+
+        if not fetch_mods.is_running():
+            fetch_mods.start()
 
     @client.event
     async def on_message(message: Message):
