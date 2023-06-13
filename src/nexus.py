@@ -89,6 +89,9 @@ def update_mods(mods):
 
 
 def fetch_online():
+    if not env.NEXUS_API_KEY:
+        return {}
+
     mods = {}
 
     if os.path.isfile(file_path):
