@@ -44,9 +44,6 @@ def run(file_lock: RWLockRead):
         if message.author == client.user:
             return
 
-        if env.DEBUG != (hasattr(message.channel, 'name') and message.channel.name == 'vmvc-debug-test'):
-            return
-
         content: str = message.content
 
         if content == "!checkmods":
