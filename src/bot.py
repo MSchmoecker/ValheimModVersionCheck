@@ -198,8 +198,10 @@ def run(file_lock: RWLockRead):
                 msg += f" BepInEx version: {mods_local.bepinex_version if mods_local.bepinex_version else 'unknown'}"
 
             channel = message.channel
+            permissions = channel.guild and channel.permissions_for(channel.guild.me)
+            can_create_threads = permissions and permissions.create_public_threads
 
-            if channel.guild and channel.permissions_for(channel.guild.me).create_public_threads:
+            if can_create_threads and hasattr(channel, "create_thread"):
                 thread = await channel.create_thread(name="Log Check",
                                                      message=original_message,
                                                      type=ChannelType.public_thread,
