@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.1
+* Fixed bot trying to create a thread in a thread
+
 ## 0.3.0
 * Changed the bot to create own threads for version check responses
 * Fixed the Nexus API not being called if no API key is provided
