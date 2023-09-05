@@ -4,7 +4,7 @@
 * Switched to Discords Slash Commands
 * Added mod list file to every log check
 * Removed commands `!checkmods`, `!modlist`
-* Renamed commands `!find faulty` to `/find_faulty`, `!thunderstore mods` to `/thunderstore_mods`, `postlog` to `/postlog`
+* Renamed commands `!find faulty` to `/find_faulty`, `!thunderstore mods` to `/thunderstore_mods`, `!postlog` to `/postlog`
 
 ## 0.3.1
 * Fixed bot trying to create a thread in a thread
