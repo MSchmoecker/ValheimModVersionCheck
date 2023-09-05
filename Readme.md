@@ -4,7 +4,7 @@
 A ~~simple~~ over-engineered discord bot that reads mod versions from a logfile and checks those against the Thunderstore API and the Nexus API.
 
 ## Quick Usage
-Invite this bot to your server using this [link](https://discord.com/api/oauth2/authorize?client_id=972794598856474664&permissions=100352&scope=bot).
+Invite this bot to your server using this [link](https://discord.com/api/oauth2/authorize?client_id=972794598856474664&permissions=34359773184&scope=bot).
 
 Uploaded BepInEx log files are automatically parsed and responded.
 
