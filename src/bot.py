@@ -44,6 +44,8 @@ def run(file_lock: RWLockRead):
         if not fetch_mods.is_running():
             fetch_mods.start()
 
+        await tree.sync()
+
     @client.event
     async def on_message(message: Message):
         if message.author == client.user:
