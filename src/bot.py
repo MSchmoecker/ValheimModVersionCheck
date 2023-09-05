@@ -9,7 +9,7 @@ import discord
 import requests
 import logging
 
-from discord import Message, ChannelType
+from discord import Message, ChannelType, app_commands, Interaction, InteractionResponse
 from discord.ext import tasks
 
 from readerwriterlock.rwlock import RWLockRead
@@ -19,11 +19,16 @@ from src import ModList, parse_local, compare_mods, fetch_errors, env, merge_err
 from typing import Optional, List
 
 
+class InteractionTyped(Interaction):
+    response: InteractionResponse
+
+
 def run(file_lock: RWLockRead):
     logging.info(f"Starting Valheim Version Check {app_version.app_version}")
     intents = discord.Intents.default()
     intents.message_content = True
     client = discord.Client(intents=intents)
+    tree = app_commands.CommandTree(client)
     modlist: ModList = ModList(file_lock)
     modlist.update_mod_list()
 
@@ -44,47 +49,13 @@ def run(file_lock: RWLockRead):
         if message.author == client.user:
             return
 
-        content: str = message.content
-
-        if content == "!checkmods":
-            logging.info("")
-            logging.info("Got request !checkmods")
-
-            logs = await get_logs(message, "!checkmods")
-            if logs is not None:
-                await on_checkmods(message, message.reference, logs, False)
-            return
-
-        if content == "!modlist":
-            logging.info("")
-            logging.info("Got request !modlist")
-
-            logs = await get_logs(message, "!modlist")
-
-            if logs is not None:
-                await on_modlist(message, logs)
-            return
-
-        if content.startswith("!find faulty"):
-            await send_detect_mods_instructions(message)
-
-        if content.startswith("!thunderstore mods"):
-            query = content[len("!thunderstore mods "):]
-            logging.info("")
-            logging.info(f"Got request !indexed mods with query: {query}")
-
-            await send_indexed_mods(message, query)
-            return
-
-        if content.startswith("!postlog") or content.startswith("!post log"):
-            await send_post_log_instructions(message)
-            return
-
         logs = await _get_logs_from_attachment(message, message.attachments, True)
         if logs is not None:
             await on_checkmods(message, message, logs, True)
 
-    async def send_indexed_mods(message, query):
+    @tree.command(name="thunderstore_mods")
+    async def send_indexed_mods(interaction: InteractionTyped, search: Optional[str]):
+        query = search or ""
         mods = modlist.get_decompiled_mods()
 
         if len(query) > 0:
@@ -107,7 +78,8 @@ def run(file_lock: RWLockRead):
         msg = "This are the extracted mods from Thunderstore"
         response_decompiled_mods = make_file(json.dumps(mods, indent=4, sort_keys=True), "mods.json")
 
-        await message.channel.send(msg, file=response_decompiled_mods)
+        await interaction.response.send_message(msg)
+        await interaction.channel.send(file=response_decompiled_mods)
 
     async def get_logs(message, command_name, silent=False) -> Optional[List[str]]:
         if message.reference is None:
@@ -168,14 +140,10 @@ def run(file_lock: RWLockRead):
                 f"Send response with {len(response.splitlines())} outdated mods lines "
                 f"and {len(merged_errors.splitlines())} errors lines")
 
-            if len(response) == 0 and len(merged_errors) == 0:
-                await message.channel.send("No outdated or old mods found. No errors found.",
-                                           reference=original_message)
-                return
-
-            response_file_outdated_mods = make_file(response, "mods.txt")
+            response_file_outdated_mods = make_file(response, "outdated_mods.txt")
+            response_file_mod_list = make_file(get_modlist(mods_local.mods), "mod_list.txt")
             response_file_errors = make_file(merged_errors, "errors.txt")
-            response_files = [response_file_outdated_mods, response_file_errors]
+            response_files = [response_file_outdated_mods, response_file_mod_list, response_file_errors]
             response_files = [f for f in response_files if f is not None]
 
             msg = "Here you go! " \
@@ -256,11 +224,13 @@ def run(file_lock: RWLockRead):
             else:
                 return f"message is not configured in user messages"
 
-    async def send_post_log_instructions(message: Message):
-        await message.channel.send(get_user_message("post_log_instructions"))
+    @tree.command(name="post_logs")
+    async def send_post_log_instructions(interaction: InteractionTyped):
+        await interaction.response.send_message(get_user_message("post_log_instructions"))
 
-    async def send_detect_mods_instructions(message):
-        await message.channel.send(get_user_message("detect_mods_instructions"))
+    @tree.command(name="find_faulty")
+    async def send_detect_mods_instructions(interaction: InteractionTyped):
+        await interaction.response.send_message(get_user_message("detect_mods_instructions"))
 
     async def wait_non_blocking(seconds):
         func = functools.partial(time.sleep, seconds)
