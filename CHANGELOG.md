@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.1
+* Fixed commands to be synced with all Guilds
+
 ## 0.4.0
 * Switched to Discords Slash Commands
 * Added mod list file to every log check
