@@ -46,5 +46,9 @@ This means that mod downloads are handled in advance and are independent of log 
 - Run `docker-compose up --build` or `python app.py`
 
 
+## Privacy Policy and Terms of Service
+See [Privacy Policy](Docs/PrivacyPolicy.md) and [Terms of Service](Docs/TOS.md)
+
+
 ## Changelog
 See [Changelog](CHANGELOG.md)
