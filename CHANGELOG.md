@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.3
+* Fixed icons from Thunderstore reuploads were preferred over older icons, which are more likely to be the original icons
+
 ## 0.5.2
 * Added icon_url to API
 * Fixed parsing of port environment variable if not set
