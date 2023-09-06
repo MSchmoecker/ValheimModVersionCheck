@@ -7,7 +7,7 @@ from src.threaded_uvicorn import ThreadedUvicorn
 
 
 def run(modlist: ModList):
-    app = FastAPI()
+    app = FastAPI(root_path=env.API_ROOT_PATH)
 
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
@@ -24,4 +24,4 @@ def run(modlist: ModList):
 
         return modlist.get_online_mods()
 
-    ThreadedUvicorn(uvicorn.Config(app, host="0.0.0.0", port=env.API_PORT)).start()
+    ThreadedUvicorn(uvicorn.Config(app, host="0.0.0.0", port=env.API_PORT, root_path=env.API_ROOT_PATH)).start()
