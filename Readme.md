@@ -15,6 +15,11 @@ Additional commands are available:
 - `/postlog`: sends instructions where to find the log file
 - `/find_faulty`: sends instructions on how to find a broken mod
 
+## API
+In addition to the Discord bot, the extracted information is also available as a [REST-API](https://mod-version-check.eu/api/docs#).
+Note that currently only an experimental API is provided which returns the internal data and may change at any point.
+Feel free to make automated requests as long as you do not abuse it.
+
 ## Deploy Your Own Bot
 If you want to host your own bot, the easiest way is to use docker-compose.
 
