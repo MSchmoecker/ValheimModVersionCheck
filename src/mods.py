@@ -79,7 +79,10 @@ class ModList:
                 self._mods_online[mod.clean_name].urls = distinct_urls
                 mod.urls = distinct_urls
 
-                if (mod.updated < self._mods_online[mod.clean_name].updated or "thunderstore" in mod.icon_url) and mod.icon_url:
+                newer_icon = mod.updated < self._mods_online[mod.clean_name].updated
+                prefer_thunder_icon = mod.icon_url.startswith("https://gcdn.thunderstore.io")\
+                                      and self._mods_online[mod.clean_name].icon_url.startswith("https://staticdelivery.nexusmods.com")
+                if (newer_icon or prefer_thunder_icon) and mod.icon_url:
                     self._mods_online[mod.clean_name].icon_url = mod.icon_url
 
         if self._can_add_mod(mod, soft_add):
