@@ -23,13 +23,12 @@ class InteractionTyped(Interaction):
     response: InteractionResponse
 
 
-def run(file_lock: RWLockRead):
+def run(modlist: ModList):
     logging.info(f"Starting Valheim Version Check {app_version.app_version}")
     intents = discord.Intents.default()
     intents.message_content = True
     client = discord.Client(intents=intents)
     tree = app_commands.CommandTree(client)
-    modlist: ModList = ModList(file_lock)
     modlist.update_mod_list()
 
     @tasks.loop(hours=1)
