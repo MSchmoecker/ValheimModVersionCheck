@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+* Added icon_url to API
+* Fixed parsing of port environment variable if not set
+
 ## 0.5.1
 * Added API_ROOT_PATH to environment variables
 
