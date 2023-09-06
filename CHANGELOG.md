@@ -1,5 +1,8 @@
 # Changelog
 
+# 0.5.0
+* Added HTTP API
+
 ## 0.4.1
 * Fixed commands to be synced with all Guilds
 
