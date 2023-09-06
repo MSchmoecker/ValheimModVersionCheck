@@ -4,6 +4,7 @@ import uvicorn
 from src import bot, env, schemas, ModList
 from readerwriterlock import rwlock
 from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 
 from src.threaded_uvicorn import ThreadedUvicorn
 
@@ -13,6 +14,8 @@ logging.basicConfig(format='[%(asctime)s %(levelname)-8s %(threadName)s] %(messa
 app = FastAPI()
 file_lock = rwlock.RWLockRead()
 modlist: ModList = ModList(file_lock)
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.get("/experimental/thunderstore-mods", response_model=schemas.ModList)
