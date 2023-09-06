@@ -1,6 +1,9 @@
 # Changelog
 
-# 0.5.0
+## 0.5.1
+* Added API_ROOT_PATH to environment variables
+
+## 0.5.0
 * Added HTTP API
 
 ## 0.4.1
