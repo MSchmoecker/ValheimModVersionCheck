@@ -34,6 +34,7 @@ def fetch_mods(file_lock: RWLockRead):
         online_mod_version = mod["versions"][0]["version_number"]
         download_url = mod["versions"][0]["download_url"]
         date_created = mod["versions"][0]["date_created"]
+        icon_url = mod["versions"][0]["icon"]
         is_deprecated = mod["is_deprecated"]
         url = mod["package_url"]
 
@@ -41,6 +42,7 @@ def fetch_mods(file_lock: RWLockRead):
             if online_mod_name in decompiled_mods:
                 decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
                 decompiled_mods[online_mod_name]["url"] = url
+                decompiled_mods[online_mod_name]["icon_url"] = icon_url
 
                 if online_mod_version == decompiled_mods[online_mod_name]["online_version"]:
                     continue
@@ -57,6 +59,7 @@ def fetch_mods(file_lock: RWLockRead):
                 decompiled_mods[online_mod_name]["date"] = date_created
                 decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
                 decompiled_mods[online_mod_name]["url"] = url
+                decompiled_mods[online_mod_name]["icon_url"] = icon_url
                 decompiled_mods[online_mod_name]["mods"] = {}
 
                 if plugins is not None:
@@ -77,8 +80,12 @@ def fetch_mods(file_lock: RWLockRead):
             finally:
                 write_lock.release()
 
+    write_lock.acquire()
+
     with open(decompiled_mods_file_path, "w") as f:
         json.dump(decompiled_mods, f, indent=4)
+
+    write_lock.release()
 
     logging.info("Fetching Thunderstore done")
 

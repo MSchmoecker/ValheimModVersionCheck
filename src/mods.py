@@ -12,18 +12,20 @@ from packaging import version
 class Mod:
     name: str
     clean_name: str
+    icon_url: str
     version: version
     updated: datetime.datetime
     deprecated: bool
     urls: List[str]
 
-    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, url: str):
+    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, icon_url: str, url: str):
         self.name = name
         self.clean_name = clean_name(name).lower()
         self.version = version.parse(mod_version)
         self.updated = updated
         self.deprecated = deprecated
         self.urls = [url]
+        self.icon_url = icon_url or ""
 
 
 class ModList:
@@ -77,6 +79,9 @@ class ModList:
                 self._mods_online[mod.clean_name].urls = distinct_urls
                 mod.urls = distinct_urls
 
+                if (mod.updated < self._mods_online[mod.clean_name].updated or "thunderstore" in mod.icon_url) and mod.icon_url:
+                    self._mods_online[mod.clean_name].icon_url = mod.icon_url
+
         if self._can_add_mod(mod, soft_add):
             self._mods_online[mod.clean_name] = mod
 
@@ -121,7 +126,8 @@ class ModList:
                 mod_name = mod["name"]
                 mod_version = mod["version"]
                 url = online_mod["url"] if "url" in online_mod else ""
-                self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, url))
+                icon_url = online_mod["icon_url"] if "icon_url" in online_mod else ""
+                self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, icon_url, url))
 
         for mod in thunder_mods:
             mod_name = mod["name"]
@@ -129,7 +135,8 @@ class ModList:
             mod_updated = self.parse_thunder_created_date(mod["versions"][0]["date_created"])
             deprecated = mod["is_deprecated"]
             url = mod["package_url"]
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, url), True)
+            icon_url = mod["versions"][0]["icon"]
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, icon_url, url), True)
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
@@ -138,7 +145,8 @@ class ModList:
             mod_version = mod["version"]
             mod_updated = self.parse_nexus_created_date(mod["updated_time"])
             url = f"https://www.nexusmods.com/valheim/mods/{mod['mod_id']}"
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, False, url), True)
+            icon_url = mod["picture_url"]
+            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, False, icon_url, url), True)
 
         logging.info("All mods updated")
 

@@ -13,6 +13,7 @@ class ModMetadata(BaseModel):
     url: str
     online_name: str
     online_version: str
+    icon_url: str
     is_deprecated: bool
     date: datetime.datetime
     mods: Dict[str, Mod]
@@ -29,6 +30,7 @@ class BepInExMod(BaseModel):
     updated: datetime.datetime
     deprecated: bool
     urls: List[str]
+    icon_url: str
 
     @field_validator("version", mode="before")
     def validate_uuids(cls, value):
