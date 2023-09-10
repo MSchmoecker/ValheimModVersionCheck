@@ -15,7 +15,7 @@ from discord.ext import tasks
 from readerwriterlock.rwlock import RWLockRead
 
 import app_version
-from src import ModList, parse_local, compare_mods, fetch_errors, env, merge_errors
+from src import ModList, parse_local, compare_mods, fetch_errors, env, merge_errors, config
 from typing import Optional, List
 
 
@@ -90,7 +90,7 @@ def run(modlist: ModList):
         replied_msg = await message.channel.fetch_message(message.reference.message_id)
         return await _get_logs_from_attachment(message, replied_msg.attachments, silent)
 
-    async def _get_logs_from_attachment(message, attachments, silent) -> Optional[List[str]]:
+    async def _get_logs_from_attachment(message: Message, attachments: List[discord.Attachment], silent: bool) -> Optional[List[str]]:
         if len(attachments) == 0:
             if not silent:
                 logging.info("Message has no attachments")
@@ -116,24 +116,41 @@ def run(modlist: ModList):
             logging.exception(f"Failed to get log from attachment: {e}")
             return []
 
-    async def on_checkmods(message: Message, original_message, logs, silent_on_no_findings):
+    def get_game_name(log: str) -> str:
+        first_line = log.splitlines()[0]
+        bepinex_suffix = first_line.split("-", 1)[1]
+        game_name = bepinex_suffix.split("(", 1)[0]
+        return game_name
+
+    def get_game(game_name: str) -> Optional[config.GameConfig]:
+        for game in config.get_games():
+            if any([log_name.strip().lower() == game_name.strip().lower() for log_name in game.bepinex.log_names]):
+                return game
+
+    async def on_checkmods(message: Message, original_message: Message, logs: List[str], silent_on_no_findings: bool):
         if not silent_on_no_findings and len(logs) == 0:
             await message.channel.send("No logs found")
             return
 
         for log in logs:
             logging.info("Parse attached file ... ")
+            game_name = get_game_name(log)
+            game = get_game(game_name)
+
+            if not game:
+                msg = f"Game {game_name} is not prepared, please open an issue at Github " \
+                      f"<https://github.com/MSchmoecker/ValheimModVersionCheck>"
+                await message.channel.send(msg, reference=original_message)
+                return
+
             mods_local = parse_local(log, True)
 
-            response = compare_mods(mods_local.mods, modlist.get_online_mods("valheim"))
+            response = compare_mods(mods_local.mods, modlist.get_online_mods(game.name))
             errors = fetch_errors(log)
 
             time_watch = datetime.datetime.now()
             merged_errors = merge_errors(errors)
             logging.info(F"Merged errors in {datetime.datetime.now() - time_watch}")
-
-            if silent_on_no_findings and len(response) == 0 and len(merged_errors) == 0:
-                return
 
             logging.info(
                 f"Send response with {len(response.splitlines())} outdated mods lines "
@@ -157,7 +174,8 @@ def run(modlist: ModList):
             if len(errors) == 0:
                 msg += "No errors found. "
 
-            msg += f"\nValheim version: {mods_local.valheim_version if mods_local.valheim_version else 'unknown'}, "
+            if game.name == "valheim":
+                msg += f"\nValheim version: {mods_local.valheim_version if mods_local.valheim_version else 'unknown'}, "
 
             if mods_local.bepinex_thunderstore_version:
                 msg += f" BepInEx version: {mods_local.bepinex_thunderstore_version} from Thunderstore"
