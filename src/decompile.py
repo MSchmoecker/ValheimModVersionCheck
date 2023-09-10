@@ -9,15 +9,17 @@ from readerwriterlock.rwlock import RWLockRead
 
 from src import thunderstore
 
-decompiled_mods_file_path = os.path.join("data", "decompiled_mods.json")
+
+def _get_mods_file_path(community: str):
+    return os.path.join("data", f"{community}_decompiled_mods.json")
 
 
-def fetch_mods(file_lock: RWLockRead):
+def fetch_mods(community: str, file_lock: RWLockRead):
     logging.info("Fetching Thunderstore ...")
-    thunder_mods = thunderstore.fetch_online()
+    thunder_mods = thunderstore.fetch_online(community)
     write_lock = file_lock.gen_rlock()
     read_lock = file_lock.gen_rlock()
-    decompiled_mods = read_extracted_mod_from_file(read_lock)
+    decompiled_mods = read_extracted_mod_from_file(community, read_lock)
 
     mod_lookup = set()
     for mod in thunder_mods:
@@ -74,7 +76,7 @@ def fetch_mods(file_lock: RWLockRead):
                                 "version": mod_version,
                             }
 
-                with open(decompiled_mods_file_path, "w") as f:
+                with open(_get_mods_file_path(community), "w") as f:
                     json.dump(decompiled_mods, f, indent=4)
 
             finally:
@@ -82,7 +84,7 @@ def fetch_mods(file_lock: RWLockRead):
 
     write_lock.acquire()
 
-    with open(decompiled_mods_file_path, "w") as f:
+    with open(_get_mods_file_path(community), "w") as f:
         json.dump(decompiled_mods, f, indent=4)
 
     write_lock.release()
@@ -90,40 +92,20 @@ def fetch_mods(file_lock: RWLockRead):
     logging.info("Fetching Thunderstore done")
 
 
-def write_extracted_mod_to_file(arguments, online_mod_name, decompiled_mods, write_lock):
-    if arguments is not None and len(arguments) == 3:
-        mod_guid = arguments[0]
-        mod_name = arguments[1]
-        mod_version = arguments[2]
-
-        write_lock.acquire()
-        try:
-            decompiled_mods[online_mod_name]["mods"][mod_guid] = {
-                "name": mod_name,
-                "version": mod_version,
-            }
-
-            with open(decompiled_mods_file_path, "w") as f:
-                json.dump(decompiled_mods, f, indent=4)
-
-        finally:
-            write_lock.release()
-
-
-def read_extracted_mod_from_file(read_lock) -> dict:
+def read_extracted_mod_from_file(community: str, read_lock) -> dict:
     read_lock.acquire()
     try:
-        return _read_decompiled_mods()
+        return _read_decompiled_mods(community)
     finally:
         read_lock.release()
 
 
-def _read_decompiled_mods() -> dict:
-    if os.path.isfile(decompiled_mods_file_path):
-        with open(decompiled_mods_file_path, "r") as f:
+def _read_decompiled_mods(community: str) -> dict:
+    try:
+        with open(_get_mods_file_path(community), "r") as f:
             decompiled_mods: dict = json.load(f)
             return decompiled_mods
-    else:
+    except:
         return {}
 
 

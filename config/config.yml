@@ -1,0 +1,10 @@
+games:
+  - name: Valheim
+    bepinex:
+      log_names:
+        - valheim
+        - valheim_server
+    thunderstore:
+      community: valheim
+    nexus:
+      game_domain: valheim

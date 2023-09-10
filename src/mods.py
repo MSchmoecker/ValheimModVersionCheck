@@ -108,7 +108,7 @@ class ModList:
     def update_mod_list(self):
         if not env.DECOMPILE_THUNDERSTORE_MODS:
             logging.info("Fetching Thunderstore ...")
-            thunder_mods = thunderstore.fetch_online()
+            thunder_mods = thunderstore.fetch_online("valheim")
         else:
             thunder_mods = []
 
@@ -117,7 +117,7 @@ class ModList:
 
         logging.info("Adding mods ...")
 
-        decompiled_mods = decompile.read_extracted_mod_from_file(self.read_lock)
+        decompiled_mods = decompile.read_extracted_mod_from_file("valheim", self.read_lock)
 
         for online_mod_key in decompiled_mods:
             online_mod = decompiled_mods[online_mod_key]
@@ -154,10 +154,10 @@ class ModList:
         logging.info("All mods updated")
 
     def get_decompiled_mods(self):
-        return decompile.read_extracted_mod_from_file(self.read_lock)
+        return decompile.read_extracted_mod_from_file("valheim", self.read_lock)
 
     def decompile_mods(self):
-        decompile.fetch_mods(self.file_lock)
+        decompile.fetch_mods("valheim", self.file_lock)
         self.update_mod_list()
 
     def run_decompile_thread(self):
