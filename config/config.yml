@@ -1,5 +1,5 @@
 games:
-  - name: Valheim
+  - name: valheim
     bepinex:
       log_names:
         - valheim

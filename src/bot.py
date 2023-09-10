@@ -24,12 +24,10 @@ class InteractionTyped(Interaction):
 
 
 def run(modlist: ModList):
-    logging.info(f"Starting Valheim Version Check {app_version.app_version}")
     intents = discord.Intents.default()
     intents.message_content = True
     client = discord.Client(intents=intents)
     tree = app_commands.CommandTree(client)
-    modlist.update_mod_list()
 
     @tasks.loop(hours=1)
     async def fetch_mods():
@@ -55,9 +53,9 @@ def run(modlist: ModList):
             await on_checkmods(message, message, logs, True)
 
     @tree.command(name="thunderstore_mods")
-    async def send_indexed_mods(interaction: InteractionTyped, search: Optional[str]):
+    async def send_indexed_mods(interaction: InteractionTyped, community: str, search: Optional[str]):
         query = search or ""
-        mods = modlist.get_decompiled_mods()
+        mods = modlist.get_decompiled_mods(community)
 
         if len(query) > 0:
             query = query.lower()
@@ -127,7 +125,7 @@ def run(modlist: ModList):
             logging.info("Parse attached file ... ")
             mods_local = parse_local(log, True)
 
-            response = compare_mods(mods_local.mods, modlist.get_online_mods())
+            response = compare_mods(mods_local.mods, modlist.get_online_mods("valheim"))
             errors = fetch_errors(log)
 
             time_watch = datetime.datetime.now()

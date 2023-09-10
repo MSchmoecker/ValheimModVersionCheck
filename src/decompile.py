@@ -10,12 +10,12 @@ from readerwriterlock.rwlock import RWLockRead
 from src import thunderstore
 
 
-def _get_mods_file_path(community: str):
+def mods_file_path(community: str):
     return os.path.join("data", f"{community}_decompiled_mods.json")
 
 
 def fetch_mods(community: str, file_lock: RWLockRead):
-    logging.info("Fetching Thunderstore ...")
+    logging.info(f"Fetching Thunderstore for {community} ...")
     thunder_mods = thunderstore.fetch_online(community)
     write_lock = file_lock.gen_rlock()
     read_lock = file_lock.gen_rlock()
@@ -76,7 +76,7 @@ def fetch_mods(community: str, file_lock: RWLockRead):
                                 "version": mod_version,
                             }
 
-                with open(_get_mods_file_path(community), "w") as f:
+                with open(mods_file_path(community), "w") as f:
                     json.dump(decompiled_mods, f, indent=4)
 
             finally:
@@ -84,12 +84,12 @@ def fetch_mods(community: str, file_lock: RWLockRead):
 
     write_lock.acquire()
 
-    with open(_get_mods_file_path(community), "w") as f:
+    with open(mods_file_path(community), "w") as f:
         json.dump(decompiled_mods, f, indent=4)
 
     write_lock.release()
 
-    logging.info("Fetching Thunderstore done")
+    logging.info(f"Fetching Thunderstore for {community} done")
 
 
 def read_extracted_mod_from_file(community: str, read_lock) -> dict:
@@ -102,7 +102,7 @@ def read_extracted_mod_from_file(community: str, read_lock) -> dict:
 
 def _read_decompiled_mods(community: str) -> dict:
     try:
-        with open(_get_mods_file_path(community), "r") as f:
+        with open(mods_file_path(community), "r") as f:
             decompiled_mods: dict = json.load(f)
             return decompiled_mods
     except:

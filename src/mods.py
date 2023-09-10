@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from readerwriterlock.rwlock import RWLockRead
 
-from src import nexus, thunderstore, clean_name, decompile, env
+from src import nexus, thunderstore, clean_name, decompile, env, config
 from packaging import version
 
 
@@ -29,7 +29,7 @@ class Mod:
 
 
 class ModList:
-    _mods_online: Dict[str, Mod] = {}
+    _mods_online: Dict[str, Dict[str, Mod]] = {}
     last_online_fetched: datetime = None
 
     def __init__(self, file_lock: RWLockRead):
@@ -38,10 +38,12 @@ class ModList:
         self.read_lock = file_lock.gen_rlock()
         self.write_lock = file_lock.gen_wlock()
 
-    def get_online_mods(self) -> Dict[str, Mod]:
+    def get_online_mods(self, community: str) -> Dict[str, Mod]:
         self.read_lock.acquire()
         try:
-            return self._mods_online
+            return self._mods_online[community]
+        except:
+            return {}
         finally:
             self.read_lock.release()
 
@@ -53,11 +55,11 @@ class ModList:
     def parse_nexus_created_date(date):
         return datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f%z").replace(tzinfo=None)
 
-    def _can_add_mod(self, mod: Mod, soft_add=False):
-        if mod.clean_name not in self._mods_online:
+    def _can_add_mod(self, community: str, mod: Mod, soft_add=False):
+        if mod.clean_name not in self._mods_online[community]:
             return True
 
-        online_mod = self._mods_online[mod.clean_name]
+        online_mod = self._mods_online[community][mod.clean_name]
 
         if mod.version > online_mod.version and not soft_add and not mod.deprecated:
             return True
@@ -67,26 +69,31 @@ class ModList:
 
         return False
 
-    def _try_add_online_mod(self, mod: Mod, soft_add=False):
+    def _try_add_online_mod(self, community: str, mod: Mod, soft_add=False):
         self.write_lock.acquire()
 
-        if mod.clean_name in self._mods_online:
-            same_version = self._mods_online[mod.clean_name].version == mod.version
+        if community not in self._mods_online:
+            self._mods_online[community] = {}
+
+        mods_online = self._mods_online[community]
+
+        if mod.clean_name in mods_online:
+            same_version = mods_online[mod.clean_name].version == mod.version
             if same_version:
-                urls = self._mods_online[mod.clean_name].urls + mod.urls
+                urls = mods_online[mod.clean_name].urls + mod.urls
                 distinct_urls = list(set(urls))
                 distinct_urls.sort()
-                self._mods_online[mod.clean_name].urls = distinct_urls
+                self._mods_online[community][mod.clean_name].urls = distinct_urls
                 mod.urls = distinct_urls
 
-                newer_icon = mod.updated < self._mods_online[mod.clean_name].updated
+                newer_icon = mod.updated < mods_online[mod.clean_name].updated
                 prefer_thunder_icon = mod.icon_url.startswith("https://gcdn.thunderstore.io")\
-                                      and self._mods_online[mod.clean_name].icon_url.startswith("https://staticdelivery.nexusmods.com")
+                                      and mods_online[mod.clean_name].icon_url.startswith("https://staticdelivery.nexusmods.com")
                 if (newer_icon or prefer_thunder_icon) and mod.icon_url:
-                    self._mods_online[mod.clean_name].icon_url = mod.icon_url
+                    self._mods_online[community][mod.clean_name].icon_url = mod.icon_url
 
-        if self._can_add_mod(mod, soft_add):
-            self._mods_online[mod.clean_name] = mod
+        if self._can_add_mod(community, mod, soft_add):
+            self._mods_online[community][mod.clean_name] = mod
 
         self.write_lock.release()
 
@@ -103,21 +110,25 @@ class ModList:
             self.run_decompile_thread()
             return
 
-        self.update_mod_list()
+        for game in config.get_games():
+            self.update_mod_list(game)
 
-    def update_mod_list(self):
+    def update_mod_list(self, game: config.GameConfig):
         if not env.DECOMPILE_THUNDERSTORE_MODS:
-            logging.info("Fetching Thunderstore ...")
-            thunder_mods = thunderstore.fetch_online("valheim")
+            logging.info(f"Fetching Thunderstore for {game.name} ...")
+            thunder_mods = thunderstore.fetch_online(game.thunderstore.community)
         else:
             thunder_mods = []
 
-        logging.info("Fetching Nexus ...")
-        nexus_mods = nexus.fetch_online()
+        if game.nexus:
+            logging.info(f"Fetching Nexus for {game.name} ...")
+            nexus_mods = nexus.fetch_online(game.nexus.game_domain)
+        else:
+            nexus_mods = {}
 
-        logging.info("Adding mods ...")
+        logging.info(f"Adding mods for {game.name} ...")
 
-        decompiled_mods = decompile.read_extracted_mod_from_file("valheim", self.read_lock)
+        decompiled_mods = decompile.read_extracted_mod_from_file(game.thunderstore.community, self.read_lock)
 
         for online_mod_key in decompiled_mods:
             online_mod = decompiled_mods[online_mod_key]
@@ -130,7 +141,7 @@ class ModList:
                 mod_version = mod["version"]
                 url = online_mod["url"] if "url" in online_mod else ""
                 icon_url = online_mod["icon_url"] if "icon_url" in online_mod else ""
-                self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, icon_url, url))
+                self._try_add_online_mod(game.name, Mod(mod_name, mod_version, mod_updated, deprecated, icon_url, url))
 
         for mod in thunder_mods:
             mod_name = mod["name"]
@@ -139,7 +150,7 @@ class ModList:
             deprecated = mod["is_deprecated"]
             url = mod["package_url"]
             icon_url = mod["versions"][0]["icon"]
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, deprecated, icon_url, url), True)
+            self._try_add_online_mod(game.name, Mod(mod_name, mod_version, mod_updated, deprecated, icon_url, url), True)
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
@@ -147,18 +158,19 @@ class ModList:
             mod_name = mod["name"]
             mod_version = mod["version"]
             mod_updated = self.parse_nexus_created_date(mod["updated_time"])
-            url = f"https://www.nexusmods.com/valheim/mods/{mod['mod_id']}"
+            url = f"https://www.nexusmods.com/{game.nexus.game_domain}/mods/{mod['mod_id']}"
             icon_url = mod["picture_url"]
-            self._try_add_online_mod(Mod(mod_name, mod_version, mod_updated, False, icon_url, url), True)
+            self._try_add_online_mod(game.name, Mod(mod_name, mod_version, mod_updated, False, icon_url, url), True)
 
-        logging.info("All mods updated")
+        logging.info(f"All {game.name} mods updated")
 
-    def get_decompiled_mods(self):
-        return decompile.read_extracted_mod_from_file("valheim", self.read_lock)
+    def get_decompiled_mods(self, community: str):
+        return decompile.read_extracted_mod_from_file(community, self.read_lock)
 
     def decompile_mods(self):
-        decompile.fetch_mods("valheim", self.file_lock)
-        self.update_mod_list()
+        for game in config.get_games():
+            decompile.fetch_mods(game.thunderstore.community, self.file_lock)
+            self.update_mod_list(game)
 
     def run_decompile_thread(self):
         if self.decompile_thread is None or not self.decompile_thread.is_alive():

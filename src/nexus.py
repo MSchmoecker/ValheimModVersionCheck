@@ -8,24 +8,26 @@ import app_version
 from src import env
 
 
-def mod_route(mod_id):
-    return f"https://api.nexusmods.com/v1/games/valheim/mods/{mod_id}.json"
+def file_path(game_domain: str):
+    return Path(os.path.join("data", f"{game_domain}_nexus_mods.json"))
 
 
-def updated_route():
-    return f"https://api.nexusmods.com/v1/games/valheim/mods/updated.json?period=1m"
+def mod_route(game_domain: str, mod_id):
+    return f"https://api.nexusmods.com/v1/games/{game_domain}/mods/{mod_id}.json"
+
+
+def updated_route(game_domain: str):
+    return f"https://api.nexusmods.com/v1/games/{game_domain}/mods/updated.json?period=1m"
 
 
 default_headers = {
     'apikey': env.NEXUS_API_KEY,
-    "Application-Name": "Valheim Mod Version Check",
+    "Application-Name": "Mod Version Check",
     "Application-Version": str(app_version.app_version)
 }
 
-file_path = Path("data/nexus_mods.json")
 
-
-def _fetch_mod(mods, mod_id, force=False):
+def _fetch_mod(game_domain: str, mods, mod_id, force=False):
     if not force and str(mod_id) in mods:
         return
 
@@ -34,21 +36,21 @@ def _fetch_mod(mods, mod_id, force=False):
     else:
         logging.info(f"Updating mod from Nexus with id {mod_id}")
 
-    r = requests.get(mod_route(mod_id), headers={**default_headers})
+    r = requests.get(mod_route(game_domain, mod_id), headers={**default_headers})
 
     if r.status_code == 200:
         mods[str(mod_id)] = r.json()
     else:
         mods[str(mod_id)] = None
 
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(file_path, 'w') as f:
+    file_path(game_domain).parent.mkdir(parents=True, exist_ok=True)
+    with open(file_path(game_domain), 'w') as f:
         json.dump(mods, f, indent=4)
 
 
-def get_highest_id_of_updated_mods():
+def get_highest_id_of_updated_mods(game_domain: str):
     try:
-        r = requests.get(updated_route(), headers={**default_headers})
+        r = requests.get(updated_route(game_domain), headers={**default_headers})
     except Exception as e:
         logging.exception(f"Failed to fetch updated nexus mods: {e}")
         return None
@@ -60,17 +62,17 @@ def get_highest_id_of_updated_mods():
     return None
 
 
-def add_new_mods(mods):
-    highest_id = get_highest_id_of_updated_mods()
+def add_new_mods(game_domain: str, mods):
+    highest_id = get_highest_id_of_updated_mods(game_domain)
 
     if highest_id:
         for mod_id in range(0, highest_id):
-            _fetch_mod(mods, mod_id + 1)
+            _fetch_mod(game_domain, mods, mod_id + 1)
 
 
-def update_mods(mods):
+def update_mods(game_domain: str, mods):
     try:
-        r = requests.get(updated_route(), headers={**default_headers})
+        r = requests.get(updated_route(game_domain), headers={**default_headers})
     except Exception as e:
         logging.exception(f"Failed to fetch updated nexus mods: {e}")
         return
@@ -85,20 +87,20 @@ def update_mods(mods):
         mod_id = str(mod['mod_id'])
 
         if mod['latest_file_update'] > mods[mod_id]['updated_timestamp']:
-            _fetch_mod(mods, mod_id, force=True)
+            _fetch_mod(game_domain, mods, mod_id, force=True)
 
 
-def fetch_online():
+def fetch_online(game_domain: str) -> dict:
     if not env.NEXUS_API_KEY:
         return {}
 
     mods = {}
 
-    if os.path.isfile(file_path):
-        with open(file_path, 'r+') as f:
+    if os.path.isfile(file_path(game_domain)):
+        with open(file_path(game_domain), 'r+') as f:
             mods = json.load(f)
 
-    add_new_mods(mods)
-    update_mods(mods)
+    add_new_mods(game_domain, mods)
+    update_mods(game_domain, mods)
 
     return mods
