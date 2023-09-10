@@ -111,7 +111,7 @@ def _read_decompiled_mods(community: str) -> dict:
 
 def extract_mod_metadata(mod_name, mod_version, download_url):
     logging.info(f"Downloading {mod_name} {mod_version} from {download_url}")
-    r = requests.get(download_url)
+    r = thunderstore.download_mod(download_url)
     plugins = extract_bep_in_plugin(mod_name, mod_version, r)
 
     for plugin in plugins:
