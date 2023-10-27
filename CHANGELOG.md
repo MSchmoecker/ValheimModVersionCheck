@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0
+* Added support for other games, can be configured using the config.yml file inside the config folder
+* Added application information for HTTP requests to the Thunderstore API
+* Updated  ilspycmd to 8.1.1.7464, this should fix some decompilation issues
+
 ## 0.5.3
 * Fixed icons from Thunderstore reuploads were preferred over older icons, which are more likely to be the original icons
 
