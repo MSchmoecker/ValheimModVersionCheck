@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+* Fixed an error if the first log line isn't formatted correctly
+* Fixed errors when the Thunderstore package request fails
+
 ## 0.6.0
 * Added support for other games, can be configured using the config.yml file inside the config folder
 * Added application information for HTTP requests to the Thunderstore API
