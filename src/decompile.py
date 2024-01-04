@@ -16,7 +16,11 @@ def mods_file_path(community: str):
 
 def fetch_mods(community: str, file_lock: RWLockRead):
     logging.info(f"Fetching Thunderstore for {community} ...")
-    thunder_mods = thunderstore.fetch_online(community)
+    success, thunder_mods = thunderstore.fetch_online(community)
+
+    if not success:
+        return
+
     write_lock = file_lock.gen_rlock()
     read_lock = file_lock.gen_rlock()
     decompiled_mods = read_extracted_mod_from_file(community, read_lock)

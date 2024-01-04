@@ -116,7 +116,7 @@ class ModList:
     def update_mod_list(self, game: config.GameConfig):
         if not env.DECOMPILE_THUNDERSTORE_MODS:
             logging.info(f"Fetching Thunderstore for {game.name} ...")
-            thunder_mods = thunderstore.fetch_online(game.thunderstore.community)
+            success, thunder_mods = thunderstore.fetch_online(game.thunderstore.community)
         else:
             thunder_mods = []
 
