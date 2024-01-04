@@ -107,7 +107,7 @@ def run(modlist: ModList):
                 if log is None or type(log) is not str or len(log) == 0:
                     continue
 
-                if not log.strip().startswith("[Message:   BepInEx]"):
+                if not log.strip().startswith("[Message:   BepInEx] BepInEx"):
                     continue
 
                 logs.append(log)
@@ -116,8 +116,10 @@ def run(modlist: ModList):
             logging.exception(f"Failed to get log from attachment: {e}")
             return []
 
-    def get_game_name(log: str) -> str:
+    def get_game_name(log: str) -> Optional[str]:
         first_line = log.splitlines()[0]
+        if "-" not in first_line:
+            return None
         bepinex_suffix = first_line.split("-", 1)[1]
         game_name = bepinex_suffix.split("(", 1)[0]
         return game_name
@@ -135,9 +137,15 @@ def run(modlist: ModList):
         for log in logs:
             logging.info("Parse attached file ... ")
             game_name = get_game_name(log)
+
+            if not game_name:
+                logging.info(f"BepInEx log does not contain game name, cannot process log file: '{log.splitlines()[0]}'")
+                continue
+
             game = get_game(game_name)
 
             if not game:
+                logging.info(f"Game {game_name} is not prepared, please open an issue at Github")
                 msg = f"Game {game_name} is not prepared, please open an issue at Github " \
                       f"<https://github.com/MSchmoecker/ValheimModVersionCheck>"
                 await message.channel.send(msg, reference=original_message)
