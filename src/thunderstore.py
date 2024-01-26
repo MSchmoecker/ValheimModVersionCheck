@@ -10,7 +10,7 @@ default_headers = {
 
 
 def fetch_online(community: str):
-    r = requests.get(f"https://{community}.thunderstore.io/api/v1/package/", headers={**default_headers})
+    r = requests.get(f"https://thunderstore.io/c/{community}/api/v1/package/", headers={**default_headers})
 
     if r.status_code == 200:
         return True, r.json()
