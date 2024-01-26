@@ -126,7 +126,7 @@ def run(modlist: ModList):
 
     def get_game(game_name: str) -> Optional[config.GameConfig]:
         for game in config.get_games():
-            if any([log_name.strip().lower() == game_name.strip().lower() for log_name in game.bepinex.log_names]):
+            if any([log_name.strip().lower() == game_name.strip().lower() for log_name in game.bepinex]):
                 return game
 
     async def on_checkmods(message: Message, original_message: Message, logs: List[str], silent_on_no_findings: bool):
@@ -145,7 +145,7 @@ def run(modlist: ModList):
             game = get_game(game_name)
 
             if not game:
-                logging.info(f"Game {game_name} is not prepared, please open an issue at Github")
+                logging.info(f"Game '{game_name}' is not prepared, please open an issue at Github")
                 msg = f"Game {game_name} is not prepared, please open an issue at Github " \
                       f"<https://github.com/MSchmoecker/ValheimModVersionCheck>"
                 await message.channel.send(msg, reference=original_message)

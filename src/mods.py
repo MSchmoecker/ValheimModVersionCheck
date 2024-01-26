@@ -114,21 +114,24 @@ class ModList:
             self.update_mod_list(game)
 
     def update_mod_list(self, game: config.GameConfig):
-        if not env.DECOMPILE_THUNDERSTORE_MODS:
+        if game.thunderstore and not env.DECOMPILE_THUNDERSTORE_MODS:
             logging.info(f"Fetching Thunderstore for {game.name} ...")
-            success, thunder_mods = thunderstore.fetch_online(game.thunderstore.community)
+            success, thunder_mods = thunderstore.fetch_online(game.thunderstore)
         else:
             thunder_mods = []
 
         if game.nexus:
             logging.info(f"Fetching Nexus for {game.name} ...")
-            nexus_mods = nexus.fetch_online(game.nexus.game_domain)
+            nexus_mods = nexus.fetch_online(game.nexus)
         else:
             nexus_mods = {}
 
         logging.info(f"Adding mods for {game.name} ...")
 
-        decompiled_mods = decompile.read_extracted_mod_from_file(game.thunderstore.community, self.read_lock)
+        if game.thunderstore:
+            decompiled_mods = decompile.read_extracted_mod_from_file(game.thunderstore, self.read_lock)
+        else:
+            decompiled_mods = {}
 
         for online_mod_key in decompiled_mods:
             online_mod = decompiled_mods[online_mod_key]
@@ -158,7 +161,7 @@ class ModList:
             mod_name = mod["name"]
             mod_version = mod["version"]
             mod_updated = self.parse_nexus_created_date(mod["updated_time"])
-            url = f"https://www.nexusmods.com/{game.nexus.game_domain}/mods/{mod['mod_id']}"
+            url = f"https://www.nexusmods.com/{game.nexus}/mods/{mod['mod_id']}"
             icon_url = mod["picture_url"]
             self._try_add_online_mod(game.name, Mod(mod_name, mod_version, mod_updated, False, icon_url, url), True)
 
@@ -169,8 +172,9 @@ class ModList:
 
     def decompile_mods(self):
         for game in config.get_games():
-            decompile.fetch_mods(game.thunderstore.community, self.file_lock)
-            self.update_mod_list(game)
+            if game.thunderstore:
+                decompile.fetch_mods(game.thunderstore, self.file_lock)
+                self.update_mod_list(game)
 
     def run_decompile_thread(self):
         if self.decompile_thread is None or not self.decompile_thread.is_alive():

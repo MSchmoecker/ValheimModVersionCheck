@@ -1,10 +1,5 @@
 games:
-  - name: valheim
-    bepinex:
-      log_names:
-        - valheim
-        - valheim_server
-    thunderstore:
-      community: valheim
-    nexus:
-      game_domain: valheim
+  - name: "valheim"
+    bepinex: ["valheim", "valheim_server"]
+    thunderstore: "valheim"
+    nexus: "valheim"

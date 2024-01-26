@@ -6,23 +6,11 @@ from pydantic import BaseModel
 config_file_path = os.path.join("config", "config.yml")
 
 
-class BepInExConfig(BaseModel):
-    log_names: List[str]
-
-
-class ThunderstoreConfig(BaseModel):
-    community: str
-
-
-class NexusConfig(BaseModel):
-    game_domain: str
-
-
 class GameConfig(BaseModel):
     name: str
-    bepinex: BepInExConfig
-    thunderstore: ThunderstoreConfig
-    nexus: Optional[NexusConfig] = None
+    bepinex: List[str]
+    thunderstore: Optional[str] = None
+    nexus: Optional[str] = None
 
 
 def get_games() -> List[GameConfig]:
