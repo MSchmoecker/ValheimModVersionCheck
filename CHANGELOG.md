@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0
+* Added support for Lethal Company
+* Simplified the config file
+* Updated  ilspycmd to 8.2.0.7535
+* Fixed community format for Thunderstore API calls, allowing more games to be supported
+
 ## 0.6.1
 * Fixed an error if the first log line isn't formatted correctly
 * Fixed errors when the Thunderstore package request fails
