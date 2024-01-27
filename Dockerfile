@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0
 
 # install ilspycmd
-RUN dotnet tool install ilspycmd -g --version 8.1.1.7464
+RUN dotnet tool install ilspycmd -g --version 8.2.0.7535
 ENV PATH "$PATH:/root/.dotnet/tools"
 
 # install python
