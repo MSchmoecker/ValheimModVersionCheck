@@ -1,9 +1,14 @@
 # Changelog
 
+## 0.8.0
+* Added warning message for PTB games
+* Added parsing of BepInEx patchers and append them as a new file
+* Improved spacing of game and BepInEx version text
+
 ## 0.7.0
 * Added support for Lethal Company
 * Simplified the config file
-* Updated  ilspycmd to 8.2.0.7535
+* Updated ilspycmd to 8.2.0.7535
 * Fixed community format for Thunderstore API calls, allowing more games to be supported
 
 ## 0.6.1
