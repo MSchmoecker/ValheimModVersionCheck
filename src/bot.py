@@ -9,6 +9,7 @@ import discord
 import requests
 import logging
 
+from packaging import version
 from discord import Message, ChannelType, app_commands, Interaction, InteractionResponse
 from discord.ext import tasks
 
@@ -189,6 +190,12 @@ def run(modlist: ModList):
                 msg += f" BepInEx version: {mods_local.bepinex_thunderstore_version} from Thunderstore"
             else:
                 msg += f" BepInEx version: {mods_local.bepinex_version if mods_local.bepinex_version else 'unknown'}"
+
+            if game.name == "valheim" and game.ptb_version and mods_local.valheim_version:
+                if mods_local.valheim_version >= version.parse(game.ptb_version):
+                    msg += f"\n\n**You are playing a test version of the game (PTB). " \
+                           f"Please note that mods may be broken and most mod authors do not offer support. " \
+                           f"Downgrade to a stable version of the game or remove mods if you encounter any issues.**"
 
             channel = message.channel
             permissions = channel.guild and channel.permissions_for(channel.guild.me)

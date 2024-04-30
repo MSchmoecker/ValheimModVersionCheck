@@ -2,6 +2,8 @@ import yaml
 import os
 from typing import List, Optional
 from pydantic import BaseModel
+from packaging import version
+
 
 config_file_path = os.path.join("config", "config.yml")
 
@@ -11,6 +13,7 @@ class GameConfig(BaseModel):
     bepinex: List[str]
     thunderstore: Optional[str] = None
     nexus: Optional[str] = None
+    ptb_version: Optional[str] = None
 
 
 def get_games() -> List[GameConfig]:
