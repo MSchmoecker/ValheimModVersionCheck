@@ -184,12 +184,15 @@ def run(modlist: ModList):
                 msg += "No errors found. "
 
             if game.name == "valheim":
-                msg += f"\nValheim version: {mods_local.valheim_version if mods_local.valheim_version else 'unknown'}, "
+                game_version = mods_local.valheim_version if mods_local.valheim_version else 'unknown'
+                msg += f"\n\nValheim version: {game_version}, "
+            else:
+                msg += f"\n\n"
 
             if mods_local.bepinex_thunderstore_version:
-                msg += f" BepInEx version: {mods_local.bepinex_thunderstore_version} from Thunderstore"
+                msg += f"BepInEx version: {mods_local.bepinex_thunderstore_version} from Thunderstore"
             else:
-                msg += f" BepInEx version: {mods_local.bepinex_version if mods_local.bepinex_version else 'unknown'}"
+                msg += f"BepInEx version: {mods_local.bepinex_version if mods_local.bepinex_version else 'unknown'}"
 
             if game.name == "valheim" and game.ptb_version and mods_local.valheim_version:
                 if mods_local.valheim_version >= version.parse(game.ptb_version):
