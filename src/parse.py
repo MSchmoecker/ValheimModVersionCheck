@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 from typing import Dict, Optional
 from packaging import version
 from src import Mod, clean_name
@@ -8,6 +9,7 @@ from src import Mod, clean_name
 class ParsedLog:
     def __init__(self):
         self.mods = {}
+        self.patchers = {}
         self.valheim_version: Optional[version.Version] = None
         self.bepinex_version: Optional[version.Version] = None
         self.bepinex_thunderstore_version: Optional[version.Version] = None
@@ -27,7 +29,36 @@ def parse_version(prefix: str, anywhere: bool, line: str) -> Optional[version.Ve
     return None
 
 
-def parse_local(local_text, is_logfile: bool) -> ParsedLog:
+def parse_mod_load(line: str, parsed_log: ParsedLog):
+    if not line.startswith("[Info   :   BepInEx] Loading ["):
+        return
+    line = line[line.index("[", 1) + 1:line.index("]", 20)]
+
+    mod_name = clean_name("".join(line.split(" ")[:-1])).lower()
+    mod_original_name = "".join(line.split(" ")[:-1])
+    mod_version = "".join(line.split(" ")[-1])
+
+    parsed_log.mods[mod_name] = {
+        "original_name": mod_original_name,
+        "version": version.parse(mod_version)
+    }
+
+
+def parse_patcher_load(line: str, parsed_log: ParsedLog):
+    if not re.match(r"\[Info   :   BepInEx] Loaded \d+ patcher method from \[.*]", line):
+        return
+    line = line[line.index("[", 1) + 1:line.index("]", 20)]
+
+    patcher_name = clean_name("".join(line.split(" ")[:-1]))
+    patcher_version = "".join(line.split(" ")[-1])
+
+    parsed_log.patchers[patcher_name] = {
+        "name": patcher_name,
+        "version": version.parse(patcher_version)
+    }
+
+
+def parse_local(local_text) -> ParsedLog:
     parsed_log = ParsedLog()
 
     lines = local_text.splitlines()
@@ -44,19 +75,8 @@ def parse_local(local_text, is_logfile: bool) -> ParsedLog:
             search = "[Message:   BepInEx] User is running BepInExPack Valheim version"
             parsed_log.bepinex_thunderstore_version = parse_version(search, False, line)
 
-        if is_logfile:
-            if not line.startswith("[Info   :   BepInEx] Loading ["):
-                continue
-            line = line[line.index("[", 1) + 1:line.index("]", 20)]
-
-        mod_name = clean_name("".join(line.split(" ")[:-1])).lower()
-        mod_original_name = "".join(line.split(" ")[:-1])
-        mod_version = "".join(line.split(" ")[-1])
-
-        parsed_log.mods[mod_name] = {
-            "original_name": mod_original_name,
-            "version": version.parse(mod_version)
-        }
+        parse_mod_load(line, parsed_log)
+        parse_patcher_load(line, parsed_log)
 
     return parsed_log
 

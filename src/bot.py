@@ -152,7 +152,7 @@ def run(modlist: ModList):
                 await message.channel.send(msg, reference=original_message)
                 return
 
-            mods_local = parse_local(log, True)
+            mods_local = parse_local(log)
 
             response = compare_mods(mods_local.mods, modlist.get_online_mods(game.name))
             errors = fetch_errors(log)
@@ -166,9 +166,10 @@ def run(modlist: ModList):
                 f"and {len(merged_errors.splitlines())} errors lines")
 
             response_file_outdated_mods = make_file(response, "outdated_mods.txt")
-            response_file_mod_list = make_file(get_modlist(mods_local.mods), "mod_list.txt")
+            response_file_mods = make_file(get_modlist(mods_local.mods), "mods.txt")
+            response_file_patchers = make_file(get_patchers_list(mods_local.patchers), "patchers.txt")
             response_file_errors = make_file(merged_errors, "errors.txt")
-            response_files = [response_file_outdated_mods, response_file_mod_list, response_file_errors]
+            response_files = [response_file_outdated_mods, response_file_mods, response_file_patchers, response_file_errors]
             response_files = [f for f in response_files if f is not None]
 
             msg = "Here you go! " \
@@ -227,10 +228,18 @@ def run(modlist: ModList):
 
         return mod_list_text
 
+    def get_patchers_list(patchers_local):
+        patcher_list_text = ""
+
+        for patcher in sorted(patchers_local.values(), key=lambda x: x["name"].lower()):
+            patcher_list_text += f'{patcher["name"]} {patcher["version"]}\n'
+
+        return patcher_list_text
+
     async def on_modlist(message, logs):
         for log in logs:
             logging.info("Parse attached file ... ")
-            mods_local = parse_local(log, True)
+            mods_local = parse_local(log)
             logging.info("done")
 
             response = get_modlist(mods_local.mods)
