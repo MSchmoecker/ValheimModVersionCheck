@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.1
+* Changed mod fetch interval from 1 hour to 15 minutes
+
 ## 0.8.0
 * Added warning message for PTB games
 * Added parsing of BepInEx patchers and append them as a new file
