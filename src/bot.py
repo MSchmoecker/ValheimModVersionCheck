@@ -30,7 +30,7 @@ def run(modlist: ModList):
     client = discord.Client(intents=intents)
     tree = app_commands.CommandTree(client)
 
-    @tasks.loop(hours=1)
+    @tasks.loop(minutes=15)
     async def fetch_mods():
         await wait_non_blocking(seconds=10)
         modlist.fetch_mods()
