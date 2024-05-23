@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0
+* Changed mod preference to dislike modpacks when multiple uploads are found
+* Simplified mod preference, this slightly impacts the order
+
 ## 0.8.1
 * Changed mod fetch interval from 1 hour to 15 minutes
 
