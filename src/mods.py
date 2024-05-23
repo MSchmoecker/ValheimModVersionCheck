@@ -1,7 +1,7 @@
 import datetime
 import logging
 import threading
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from readerwriterlock.rwlock import RWLockRead
 
@@ -16,16 +16,42 @@ class Mod:
     version: version
     updated: datetime.datetime
     deprecated: bool
+    is_modpack: bool
+    source: str
     urls: List[str]
 
-    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, icon_url: str, url: str):
+    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, is_modpack: bool, source: str, icon_url: str, url: str):
         self.name = name
         self.clean_name = clean_name(name).lower()
         self.version = version.parse(mod_version)
         self.updated = updated
         self.deprecated = deprecated
+        self.is_modpack = is_modpack
+        self.source = source
         self.urls = [url]
         self.icon_url = icon_url or ""
+
+    def __lt__(self, other):
+        # prefer Thunderstore
+        if self.source == "Thunderstore" and other.source == "Nexus":
+            return True
+        if self.source == "Nexus" and other.source == "Thunderstore":
+            return False
+
+        # prefer non-modpacks
+        if not self.is_modpack and other.is_modpack:
+            return True
+        if self.is_modpack and not other.is_modpack:
+            return False
+
+        # prefer higher version
+        if self.version > other.version:
+            return True
+        if self.version < other.version:
+            return False
+
+        # prefer original uploads over possible reuploads
+        return self.updated < other.updated
 
 
 class ModList:
@@ -55,45 +81,13 @@ class ModList:
     def parse_nexus_created_date(date):
         return datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f%z").replace(tzinfo=None)
 
-    def _can_add_mod(self, community: str, mod: Mod, soft_add=False):
-        if mod.clean_name not in self._mods_online[community]:
-            return True
-
-        online_mod = self._mods_online[community][mod.clean_name]
-
-        if mod.version > online_mod.version and not soft_add and not mod.deprecated:
-            return True
-
-        if mod.version == online_mod.version and mod.updated < online_mod.updated:
-            return True
-
-        return False
-
-    def _try_add_online_mod(self, community: str, mod: Mod, soft_add=False):
+    def _add_online_mod(self, community: str, mod: Mod):
         self.write_lock.acquire()
 
         if community not in self._mods_online:
             self._mods_online[community] = {}
 
-        mods_online = self._mods_online[community]
-
-        if mod.clean_name in mods_online:
-            same_version = mods_online[mod.clean_name].version == mod.version
-            if same_version:
-                urls = mods_online[mod.clean_name].urls + mod.urls
-                distinct_urls = list(set(urls))
-                distinct_urls.sort()
-                self._mods_online[community][mod.clean_name].urls = distinct_urls
-                mod.urls = distinct_urls
-
-                newer_icon = mod.updated < mods_online[mod.clean_name].updated
-                prefer_thunder_icon = mod.icon_url.startswith("https://gcdn.thunderstore.io")\
-                                      and mods_online[mod.clean_name].icon_url.startswith("https://staticdelivery.nexusmods.com")
-                if (newer_icon or prefer_thunder_icon) and mod.icon_url:
-                    self._mods_online[community][mod.clean_name].icon_url = mod.icon_url
-
-        if self._can_add_mod(community, mod, soft_add):
-            self._mods_online[community][mod.clean_name] = mod
+        self._mods_online[community][mod.clean_name] = mod
 
         self.write_lock.release()
 
@@ -133,10 +127,13 @@ class ModList:
         else:
             decompiled_mods = {}
 
+        mods_sources: Dict[str, List[Mod]] = {}
+
         for online_mod_key in decompiled_mods:
             online_mod = decompiled_mods[online_mod_key]
             mod_updated = self.parse_thunder_created_date(online_mod["date"])
             deprecated = online_mod["is_deprecated"] if "is_deprecated" in online_mod else False
+            is_modpack = online_mod["is_modpack"] if "is_modpack" in online_mod else False
 
             for mod_key in online_mod["mods"]:
                 mod = online_mod["mods"][mod_key]
@@ -144,7 +141,11 @@ class ModList:
                 mod_version = mod["version"]
                 url = online_mod["url"] if "url" in online_mod else ""
                 icon_url = online_mod["icon_url"] if "icon_url" in online_mod else ""
-                self._try_add_online_mod(game.name, Mod(mod_name, mod_version, mod_updated, deprecated, icon_url, url))
+
+                clean = clean_name(mod_name).lower()
+                if clean not in mods_sources:
+                    mods_sources[clean] = []
+                mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url))
 
         for mod in thunder_mods:
             mod_name = mod["name"]
@@ -153,7 +154,12 @@ class ModList:
             deprecated = mod["is_deprecated"]
             url = mod["package_url"]
             icon_url = mod["versions"][0]["icon"]
-            self._try_add_online_mod(game.name, Mod(mod_name, mod_version, mod_updated, deprecated, icon_url, url), True)
+            is_modpack = "Modpacks" in mod["categories"] or "modpack" in mod_name.lower() or len(mod["versions"][0]["dependencies"]) >= 5
+
+            clean = clean_name(mod_name).lower()
+            if clean not in mods_sources:
+                mods_sources[clean] = []
+            mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url))
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
@@ -163,7 +169,17 @@ class ModList:
             mod_updated = self.parse_nexus_created_date(mod["updated_time"])
             url = f"https://www.nexusmods.com/{game.nexus}/mods/{mod['mod_id']}"
             icon_url = mod["picture_url"]
-            self._try_add_online_mod(game.name, Mod(mod_name, mod_version, mod_updated, False, icon_url, url), True)
+
+            clean = clean_name(mod_name).lower()
+            if clean not in mods_sources:
+                mods_sources[clean] = []
+            mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, False, False, "Nexus", icon_url, url))
+
+        for mod in mods_sources:
+            ordered = sorted(mods_sources[mod])
+            main = ordered[0]
+            main.urls = [m.urls[0] for m in ordered if m == main or not (m.deprecated or m.is_modpack)]
+            self._add_online_mod(game.name, main)
 
         logging.info(f"All {game.name} mods updated")
 

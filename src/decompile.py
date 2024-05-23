@@ -42,6 +42,7 @@ def fetch_mods(community: str, file_lock: RWLockRead):
         date_created = mod["versions"][0]["date_created"]
         icon_url = mod["versions"][0]["icon"]
         is_deprecated = mod["is_deprecated"]
+        is_modpack = "Modpacks" in mod["categories"] or "modpack" in online_name.lower() or len(mod["versions"][0]["dependencies"]) >= 5
         url = mod["package_url"]
 
         if online_name != "r2modman":
@@ -49,6 +50,7 @@ def fetch_mods(community: str, file_lock: RWLockRead):
                 decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
                 decompiled_mods[online_mod_name]["url"] = url
                 decompiled_mods[online_mod_name]["icon_url"] = icon_url
+                decompiled_mods[online_mod_name]["is_modpack"] = is_modpack
 
                 if online_mod_version == decompiled_mods[online_mod_name]["online_version"]:
                     continue
@@ -66,6 +68,7 @@ def fetch_mods(community: str, file_lock: RWLockRead):
                 decompiled_mods[online_mod_name]["is_deprecated"] = is_deprecated
                 decompiled_mods[online_mod_name]["url"] = url
                 decompiled_mods[online_mod_name]["icon_url"] = icon_url
+                decompiled_mods[online_mod_name]["is_modpack"] = is_modpack
                 decompiled_mods[online_mod_name]["mods"] = {}
 
                 if plugins is not None:
