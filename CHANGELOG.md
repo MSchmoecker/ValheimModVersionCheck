@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.1
+* Changed the order of the patchers.txt and mods.txt
+* Fixed mods with a lower version being shown as newer suggestions
+* Fixed uploading multiple logs attempted to create multiple threads, which is not allowed and only the first log was responded to
+
 ## 0.9.0
 * Changed mod preference to dislike modpacks when multiple uploads are found
 * Simplified mod preference, this slightly impacts the order
