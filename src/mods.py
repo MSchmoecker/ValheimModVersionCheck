@@ -53,6 +53,13 @@ class Mod:
         # prefer original uploads over possible reuploads
         return self.updated < other.updated
 
+    def use_as_url(self, best_candidate):
+        if self == best_candidate:
+            return True
+        if self.deprecated or self.is_modpack:
+            return False
+        return self.version >= best_candidate.version
+
 
 class ModList:
     _mods_online: Dict[str, Dict[str, Mod]] = {}
@@ -177,9 +184,9 @@ class ModList:
 
         for mod in mods_sources:
             ordered = sorted(mods_sources[mod])
-            main = ordered[0]
-            main.urls = [m.urls[0] for m in ordered if m == main or not (m.deprecated or m.is_modpack)]
-            self._add_online_mod(game.name, main)
+            best_candidate = ordered[0]
+            best_candidate.urls = [mod.urls[0] for mod in ordered if mod.use_as_url(best_candidate)]
+            self._add_online_mod(game.name, best_candidate)
 
         logging.info(f"All {game.name} mods updated")
 
