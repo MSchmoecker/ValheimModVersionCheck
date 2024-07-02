@@ -135,6 +135,8 @@ def run(modlist: ModList):
             await message.channel.send("No logs found")
             return
 
+        thread = None
+
         for log in logs:
             logging.info("Parse attached file ... ")
             game_name = get_game_name(log)
@@ -206,10 +208,11 @@ def run(modlist: ModList):
             can_create_threads = permissions and permissions.create_public_threads
 
             if can_create_threads and hasattr(channel, "create_thread"):
-                thread = await channel.create_thread(name="Log Check",
-                                                     message=original_message,
-                                                     type=ChannelType.public_thread,
-                                                     auto_archive_duration=60)
+                if thread is None:
+                    thread = await channel.create_thread(name="Log Check",
+                                                         message=original_message,
+                                                         type=ChannelType.public_thread,
+                                                         auto_archive_duration=60)
                 await thread.send(msg, files=response_files)
             else:
                 await channel.send(msg, files=response_files, reference=original_message)
