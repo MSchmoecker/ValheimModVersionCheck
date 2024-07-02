@@ -169,7 +169,7 @@ def run(modlist: ModList):
             response_file_mods = make_file(get_modlist(mods_local.mods), "mods.txt")
             response_file_patchers = make_file(get_patchers_list(mods_local.patchers), "patchers.txt")
             response_file_errors = make_file(merged_errors, "errors.txt")
-            response_files = [response_file_outdated_mods, response_file_mods, response_file_patchers, response_file_errors]
+            response_files = [response_file_outdated_mods, response_file_patchers, response_file_mods, response_file_errors]
             response_files = [f for f in response_files if f is not None]
 
             msg = "Here you go! " \
