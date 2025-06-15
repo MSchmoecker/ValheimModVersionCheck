@@ -3,6 +3,5 @@ games:
     bepinex: ["valheim", "valheim_server"]
     thunderstore: "valheim"
     nexus: "valheim"
-  - name: "lethal_company"
-    bepinex: ["Lethal Company"]
-    thunderstore: "lethal-company"
+    report_old_mods: false
+    report_old_mods_threshold_days: 365

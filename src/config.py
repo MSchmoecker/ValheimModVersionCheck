@@ -14,6 +14,8 @@ class GameConfig(BaseModel):
     thunderstore: Optional[str] = None
     nexus: Optional[str] = None
     ptb_version: Optional[str] = None
+    report_old_mods: bool = True
+    report_old_mods_threshold_days: int = 365
 
 
 def get_games() -> List[GameConfig]:

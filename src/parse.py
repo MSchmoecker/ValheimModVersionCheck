@@ -4,6 +4,7 @@ import re
 from typing import Dict, Optional
 from packaging import version
 from src import Mod, clean_name
+from src.config import GameConfig
 
 
 class ParsedLog:
@@ -81,8 +82,8 @@ def parse_local(local_text) -> ParsedLog:
     return parsed_log
 
 
-def compare_mods(mods_local, mods_online: Dict[str, Mod]):
-    time_threshold = datetime.datetime.now() - datetime.timedelta(days=30 * 12)
+def compare_mods(mods_local, mods_online: Dict[str, Mod], game_config: GameConfig):
+    time_threshold = datetime.datetime.now() - datetime.timedelta(days=game_config.report_old_mods_threshold_days)
     result = ""
 
     for mod in sorted(mods_local, key=lambda x: mods_local[x]["original_name"].lower()):
@@ -94,7 +95,7 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
             continue
 
         outdated = mod_version < mods_online[mod].version
-        old = mods_online[mod].updated < time_threshold
+        old = game_config.report_old_mods and mods_online[mod].updated < time_threshold
         deprecated = mods_online[mod].deprecated
 
         if outdated or old or deprecated:

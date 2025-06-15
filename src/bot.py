@@ -156,7 +156,7 @@ def run(modlist: ModList):
 
             mods_local = parse_local(log)
 
-            response = compare_mods(mods_local.mods, modlist.get_online_mods(game.name))
+            response = compare_mods(mods_local.mods, modlist.get_online_mods(game.name), game)
             errors = parse_errors(log)
 
             time_watch = datetime.datetime.now()
