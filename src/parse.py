@@ -119,39 +119,53 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod]):
     return result
 
 
-def fetch_errors(log):
+def parse_errors(log: str, context_before=4, context_after=0):
+    lines = log.splitlines()
+    line_types = ["Normal"] * len(lines)
+
+    for i, line in enumerate(lines):
+        if line.startswith("[Error") or line.startswith("[Fatal") or "Exception in ZRpc::HandlePackage:" in line:
+            line_types[i] = "Error"
+        elif line.startswith("[Warning"):
+            line_types[i] = "Warning"
+        elif line.startswith("[Info") or line.startswith("[Debug") or line.startswith("[Message") or line.strip() == "":
+            line_types[i] = "Normal"
+        elif i > 0 and line_types[i - 1] == "Error":
+            line_types[i] = "Error"
+            lines[i] = "  " + lines[i]
+        elif i > 0 and line_types[i - 1] == "Warning":
+            line_types[i] = "Warning"
+            lines[i] = "  " + lines[i]
+
+    for i, line_type in enumerate(line_types):
+        if line_type == "Error" or line_type == "Warning":
+            for j in range(max(0, i - context_before), i):
+                if line_types[j] == "Normal":
+                    line_types[j] = "Context"
+            for j in range(i + 1, min(len(lines), i + 1 + context_after)):
+                if line_types[j] == "Normal":
+                    line_types[j] = "Context"
+
     errors = ""
-    is_in_error = False
-    was_in_warning = False
+    for i, line in enumerate(lines):
+        next_is_error = i < len(lines) - 1 and line_types[i + 1] == "Error"
+        next_is_not_error = i < len(lines) - 1 and line_types[i + 1] != "Error"
+        prefix = f"{str(i + 1).rjust(4)} | "
 
-    for i, line in enumerate(log.splitlines()):
-        if line == "":
-            if is_in_error:
-                errors += "\n"
-            is_in_error = False
-            continue
+        if line_types[i] == "Error":
+            errors += f"{prefix}{line}\n"
+        elif line_types[i] == "Warning":
+            errors += f"{prefix}{line}\n"
+        elif line_types[i] == "Context" and lines[i].strip() != "":
+            errors += f"{prefix}{line}\n"
+        if line_types[i] == "Error" and next_is_not_error:
+            errors += "\n"
+        if line_types[i] != "Error" and next_is_error:
+            errors += "\n"
 
-        if line.startswith("[Info") or line.startswith("[Debug") or line.startswith("[Message"):
-            if is_in_error:
-                errors += "\n"
-            is_in_error = False
-            was_in_warning = False
+    return errors.replace("\n\n\n", "\n\n").strip("\n")
 
-        if is_in_error or line.startswith("[Error") or line.startswith("[Fatal") or "Exception in ZRpc::HandlePackage:" in line:
-            if was_in_warning or not is_in_error:
-                errors += "\n"
-                was_in_warning = False
-            errors += f"{line}\n"
-            is_in_error = True
-
-        if line.startswith("[Warning"):
-            errors += f"{line}\n"
-            was_in_warning = True
-
-    return errors.replace("\n\n\n", "\n\n")
-
-
-def merge_errors(errors) -> str:
+def merge_errors(errors: str) -> str:
     result = ""
     max_length = 50
     lines = errors.splitlines()
@@ -162,22 +176,25 @@ def merge_errors(errors) -> str:
             skip -= 1
             continue
         for i2, line in enumerate(lines[i1 + 1:i1 + max_length]):
-            if error == line:
+            if error[4:] == line[4:]:
                 end_pos = i1 + 1 + i2
                 length = end_pos - i1
                 block1 = lines[i1:end_pos]
                 block2 = lines[end_pos:end_pos + length]
+                block1_cmp = [l[4:] for l in block1]
+                block2_cmp = [l[4:] for l in block2]
                 duplicates = 1
 
-                while block1 == block2:
+                while block1_cmp == block2_cmp:
                     end_pos += length
                     block2 = lines[end_pos:end_pos + length]
+                    block2_cmp = [l[4:] for l in block2]
                     duplicates += 1
 
                 if duplicates > 1 and len(block1) * duplicates >= 3:
                     header = f"----- {duplicates}x -----"
                     result += "\n" + header + "\n"
-                    result += "\n".join(block1).strip() + "\n"
+                    result += "\n".join(block1).strip("\n") + "\n"
                     result += "-" * len(header) + "\n\n"
                     skip = length * duplicates - 1
                     break

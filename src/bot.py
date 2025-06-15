@@ -16,7 +16,7 @@ from discord.ext import tasks
 from readerwriterlock.rwlock import RWLockRead
 
 import app_version
-from src import ModList, parse_local, compare_mods, fetch_errors, env, merge_errors, config
+from src import ModList, parse_local, compare_mods, parse_errors, env, merge_errors, config
 from typing import Optional, List
 
 
@@ -157,7 +157,7 @@ def run(modlist: ModList):
             mods_local = parse_local(log)
 
             response = compare_mods(mods_local.mods, modlist.get_online_mods(game.name))
-            errors = fetch_errors(log)
+            errors = parse_errors(log)
 
             time_watch = datetime.datetime.now()
             merged_errors = merge_errors(errors)
