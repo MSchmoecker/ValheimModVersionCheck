@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0
+* Improve error parser to include line numbers and context lines
+* Added yaml configs for report_old_mods and report_old_mods_threshold_days
+
 ## 0.9.1
 * Changed the order of the patchers.txt and mods.txt
 * Fixed mods with a lower version being shown as newer suggestions
