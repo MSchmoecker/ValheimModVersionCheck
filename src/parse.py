@@ -99,15 +99,17 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod], game_config: GameConfi
         deprecated = mods_online[mod].deprecated
 
         if outdated or old or deprecated:
-            result += f"{original_name} {mod_version}\n"
+            if outdated:
+                result += f"{original_name} {mod_version} -> {mods_online[mod].version}\n"
+            else:
+                result += f"{original_name} {mod_version}\n"
 
         if deprecated:
             result += f"\tis deprecated\n"
 
         if outdated:
-            result += f"\tis likely outdated, version {mods_online[mod].version} exists:\n"
             for url in mods_online[mod].urls:
-                result += f"\t\t{url}\n"
+                result += f"\thigher version available: {url}\n"
 
         if old:
             result += f"\tis older than one year (uploaded {mods_online[mod].updated.strftime('%Y-%m-%d')})\n"

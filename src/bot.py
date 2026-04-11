@@ -157,7 +157,7 @@ def run(modlist: ModList):
             mods_local = parse_local(log)
             online_mods = modlist.get_online_mods(game.name)
 
-            response = compare_mods(mods_local.mods, online_mods, game)
+            outdated_mods = compare_mods(mods_local.mods, online_mods, game)
             errors = parse_errors(log)
 
             time_watch = datetime.datetime.now()
@@ -165,14 +165,16 @@ def run(modlist: ModList):
             logging.info(F"Merged errors in {datetime.datetime.now() - time_watch}")
 
             logging.info(
-                f"Send response with {len(response.splitlines())} outdated mods lines "
-                f"and {len(merged_errors.splitlines())} errors lines")
+                f"Send response with {len(outdated_mods.splitlines())} outdated mods lines "
+                f"and {len(merged_errors.splitlines())} errors lines"
+            )
 
-            response_file_outdated_mods = make_file(response, "outdated_mods.txt")
-            response_file_mods = make_file(get_modlist(mods_local.mods, online_mods), "mods.txt")
-            response_file_patchers = make_file(get_patchers_list(mods_local.patchers), "patchers.txt")
+            mods_response = "Outdated Mods:\n" + outdated_mods + \
+                            "\nPatcher:\n" + get_patchers_list(mods_local.patchers) + \
+                            "\nMods:\n" + get_modlist(mods_local.mods, online_mods)
+            response_file_mods = make_file(mods_response, "mods.txt")
             response_file_errors = make_file(merged_errors, "errors.txt")
-            response_files = [response_file_outdated_mods, response_file_patchers, response_file_mods, response_file_errors]
+            response_files = [response_file_mods, response_file_errors]
             response_files = [f for f in response_files if f is not None]
 
             msg = "Here you go! " \
@@ -182,7 +184,7 @@ def run(modlist: ModList):
                   "the name is ambiguous or a beta version has been uploaded to Thunderstore.\n" \
                   "Take it with a grain of salt. "
 
-            if len(response) == 0:
+            if len(outdated_mods) == 0:
                 msg += "No outdated or old mods found. "
             if len(errors) == 0:
                 msg += "No errors found. "
