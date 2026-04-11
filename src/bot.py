@@ -16,8 +16,8 @@ from discord.ext import tasks
 from readerwriterlock.rwlock import RWLockRead
 
 import app_version
-from src import ModList, parse_local, compare_mods, parse_errors, env, merge_errors, config
-from typing import Optional, List
+from src import ModList, parse_local, compare_mods, parse_errors, env, merge_errors, config, Mod
+from typing import Optional, List, Dict
 
 
 class InteractionTyped(Interaction):
@@ -155,8 +155,9 @@ def run(modlist: ModList):
                 return
 
             mods_local = parse_local(log)
+            online_mods = modlist.get_online_mods(game.name)
 
-            response = compare_mods(mods_local.mods, modlist.get_online_mods(game.name), game)
+            response = compare_mods(mods_local.mods, online_mods, game)
             errors = parse_errors(log)
 
             time_watch = datetime.datetime.now()
@@ -168,7 +169,7 @@ def run(modlist: ModList):
                 f"and {len(merged_errors.splitlines())} errors lines")
 
             response_file_outdated_mods = make_file(response, "outdated_mods.txt")
-            response_file_mods = make_file(get_modlist(mods_local.mods), "mods.txt")
+            response_file_mods = make_file(get_modlist(mods_local.mods, online_mods), "mods.txt")
             response_file_patchers = make_file(get_patchers_list(mods_local.patchers), "patchers.txt")
             response_file_errors = make_file(merged_errors, "errors.txt")
             response_files = [response_file_outdated_mods, response_file_patchers, response_file_mods, response_file_errors]
@@ -223,11 +224,15 @@ def run(modlist: ModList):
         tmp = io.StringIO(content)
         return discord.File(tmp, filename=filename)
 
-    def get_modlist(mods_local):
+    def get_modlist(mods_local, online_mods: Dict[str, Mod]):
         mod_list_text = ""
 
-        for mod in sorted(mods_local.values(), key=lambda x: x["original_name"].lower()):
-            mod_list_text += f'{mod["original_name"]} {mod["version"]}\n'
+        for clean_name, mod in sorted(mods_local.items(), key=lambda x: x[1]["original_name"].lower()):
+            online_mod = online_mods.get(clean_name, None)
+            if online_mod and "AI Generated" in online_mod.categories:
+                mod_list_text += f'{mod["original_name"]} {mod["version"]} (AI Generated)\n'
+            else:
+                mod_list_text += f'{mod["original_name"]} {mod["version"]}\n'
 
         return mod_list_text
 
@@ -245,7 +250,14 @@ def run(modlist: ModList):
             mods_local = parse_local(log)
             logging.info("done")
 
-            response = get_modlist(mods_local.mods)
+            game_name = get_game_name(log)
+            if game_name:
+                game = get_game(game_name)
+                online_mods = modlist.get_online_mods(game.name)
+            else:
+                online_mods = {}
+
+            response = get_modlist(mods_local.mods, online_mods)
 
             tmp = io.StringIO(response)
             response_file = discord.File(tmp, filename="mods.txt")

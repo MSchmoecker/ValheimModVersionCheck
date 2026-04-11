@@ -19,8 +19,9 @@ class Mod:
     is_modpack: bool
     source: str
     urls: List[str]
+    categories: List[str]
 
-    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, is_modpack: bool, source: str, icon_url: str, url: str):
+    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, is_modpack: bool, source: str, icon_url: str, url: str, categories: List[str]):
         self.name = name
         self.clean_name = clean_name(name).lower()
         self.version = version.parse(mod_version)
@@ -30,6 +31,7 @@ class Mod:
         self.source = source
         self.urls = [url]
         self.icon_url = icon_url or ""
+        self.categories = categories
 
     def __lt__(self, other):
         # prefer Thunderstore
@@ -141,6 +143,7 @@ class ModList:
             mod_updated = self.parse_thunder_created_date(online_mod["date"])
             deprecated = online_mod["is_deprecated"] if "is_deprecated" in online_mod else False
             is_modpack = online_mod["is_modpack"] if "is_modpack" in online_mod else False
+            categories = online_mod["categories"] if "categories" in online_mod else []
 
             for mod_key in online_mod["mods"]:
                 mod = online_mod["mods"][mod_key]
@@ -152,7 +155,7 @@ class ModList:
                 clean = clean_name(mod_name).lower()
                 if clean not in mods_sources:
                     mods_sources[clean] = []
-                mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url))
+                mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url, categories))
 
         for mod in thunder_mods:
             mod_name = mod["name"]
@@ -162,11 +165,12 @@ class ModList:
             url = mod["package_url"]
             icon_url = mod["versions"][0]["icon"]
             is_modpack = "Modpacks" in mod["categories"] or "modpack" in mod_name.lower() or len(mod["versions"][0]["dependencies"]) >= 5
+            categories = mod["categories"]
 
             clean = clean_name(mod_name).lower()
             if clean not in mods_sources:
                 mods_sources[clean] = []
-            mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url))
+            mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url, categories))
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
@@ -180,7 +184,7 @@ class ModList:
             clean = clean_name(mod_name).lower()
             if clean not in mods_sources:
                 mods_sources[clean] = []
-            mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, False, False, "Nexus", icon_url, url))
+            mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, False, False, "Nexus", icon_url, url, []))
 
         for mod in mods_sources:
             ordered = sorted(mods_sources[mod])
