@@ -3,6 +3,7 @@ import functools
 import io
 import json
 import os
+import string
 import time
 
 import discord
@@ -125,10 +126,15 @@ def run(modlist: ModList):
         game_name = bepinex_suffix.split("(", 1)[0]
         return game_name
 
+    def find_by_bepinex_name(name: str) -> Optional[config.GameConfig]:
+        return next(
+            (game for game in config.get_games() if any(log_name.strip().lower() == name for log_name in game.bepinex)),
+            None
+        )
+
     def get_game(game_name: str) -> Optional[config.GameConfig]:
-        for game in config.get_games():
-            if any([log_name.strip().lower() == game_name.strip().lower() for log_name in game.bepinex]):
-                return game
+        normalized = game_name.strip().lower()
+        return find_by_bepinex_name(normalized) or find_by_bepinex_name(normalized.rstrip(string.digits))
 
     async def on_checkmods(message: Message, original_message: Message, logs: List[str], silent_on_no_findings: bool):
         if not silent_on_no_findings and len(logs) == 0:
