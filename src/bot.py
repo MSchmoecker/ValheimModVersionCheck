@@ -16,7 +16,7 @@ from discord.ext import tasks
 from readerwriterlock.rwlock import RWLockRead
 
 import app_version
-from src import ModList, parse_local, compare_mods, parse_errors, env, merge_errors, config, Mod
+from src import ModList, parse_local, compare_mods, parse_errors, env, merge_errors, config, Mod, clean_name
 from typing import Optional, List, Dict
 
 
@@ -170,7 +170,7 @@ def run(modlist: ModList):
             )
 
             mods_response = "Outdated Mods:\n" + outdated_mods + \
-                            "\nPatcher:\n" + get_patchers_list(mods_local.patchers) + \
+                            "\nPatcher:\n" + get_patchers_list(mods_local.patchers, online_mods) + \
                             "\nMods:\n" + get_modlist(mods_local.mods, online_mods)
             response_file_mods = make_file(mods_response, "mods.txt")
             response_file_errors = make_file(merged_errors, "errors.txt")
@@ -230,19 +230,22 @@ def run(modlist: ModList):
         mod_list_text = ""
 
         for clean_name, mod in sorted(mods_local.items(), key=lambda x: x[1]["original_name"].lower()):
-            online_mod = online_mods.get(clean_name, None)
-            if online_mod and "AI Generated" in online_mod.categories:
+            if clean_name in online_mods and "AI Generated" in online_mods[clean_name].categories:
                 mod_list_text += f'{mod["original_name"]} {mod["version"]} (AI Generated)\n'
             else:
                 mod_list_text += f'{mod["original_name"]} {mod["version"]}\n'
 
         return mod_list_text
 
-    def get_patchers_list(patchers_local):
+    def get_patchers_list(patchers_local, online_mods: Dict[str, Mod]):
         patcher_list_text = ""
 
-        for patcher in sorted(patchers_local.values(), key=lambda x: x["name"].lower()):
-            patcher_list_text += f'{patcher["name"]} {patcher["version"]}\n'
+        for patcher_name, patcher in sorted(patchers_local.items(), key=lambda x: x[1]["name"].lower()):
+            clean_patcher_name = clean_name(patcher_name).lower()
+            if clean_patcher_name in online_mods and "AI Generated" in online_mods[clean_patcher_name].categories:
+                 patcher_list_text += f'{patcher["name"]} {patcher["version"]} (AI Generated)\n'
+            else:
+                patcher_list_text += f'{patcher["name"]} {patcher["version"]}\n'
 
         return patcher_list_text
 
