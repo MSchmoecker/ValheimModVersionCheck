@@ -51,6 +51,7 @@ def fetch_mods(community: str, file_lock: RWLockRead):
                 decompiled_mods[online_mod_name]["url"] = url
                 decompiled_mods[online_mod_name]["icon_url"] = icon_url
                 decompiled_mods[online_mod_name]["is_modpack"] = is_modpack
+                decompiled_mods[online_mod_name]["categories"] = mod["categories"]
 
                 if online_mod_version == decompiled_mods[online_mod_name]["online_version"]:
                     continue
