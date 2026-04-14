@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.11.1
+* Fixed categories of existing decompiled mods were not being updated
+
 ## 0.11.0
 * Added AI Generated label for mods tagged with that category on Thunderstore
 * Merged outdated mods, patchers and mods into a single file
