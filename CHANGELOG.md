@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0
+* Added AI Generated label for mods tagged with that category on Thunderstore
+* Merged outdated mods, patchers and mods into a single file
+* Fixed game lookup failing for executables with a trailing numeric suffix
+
 ## 0.10.0
 * Improve error parser to include line numbers and context lines
 * Added yaml configs for report_old_mods and report_old_mods_threshold_days
