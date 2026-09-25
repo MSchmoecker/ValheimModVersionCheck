@@ -48,7 +48,8 @@ This means that mod downloads are handled in advance and are independent of log 
 
 ## Development
 - Copy `.env.sample` to `.env` and set necessary values.
-- Run `docker-compose up --build` or `python app.py`
+- Run `docker-compose up --build`, or install [uv](https://docs.astral.sh/uv/) and run `uv run app.py`.
+- A Nix flake is also provided: `nix develop` for a dev shell, or `nix run` to start the bot directly.
 
 
 ## Privacy Policy and Terms of Service
