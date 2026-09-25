@@ -155,7 +155,11 @@ class ModList:
                 clean = clean_name(mod_name).lower()
                 if clean not in mods_sources:
                     mods_sources[clean] = []
-                mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url, categories))
+                try:
+                    mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url, categories))
+                except Exception as e:
+                    logging.error(f"Error adding mod {mod_name} version {mod_version}: {e}")
+                    continue
 
         for mod in thunder_mods:
             mod_name = mod["name"]
@@ -170,7 +174,11 @@ class ModList:
             clean = clean_name(mod_name).lower()
             if clean not in mods_sources:
                 mods_sources[clean] = []
-            mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url, categories))
+            try:
+                mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, deprecated, is_modpack, "Thunderstore", icon_url, url, categories))
+            except Exception as e:
+                logging.error(f"Error adding mod {mod_name} version {mod_version}: {e}")
+                continue
 
         for mod in nexus_mods.values():
             if mod is None or mod["status"] != "published":
@@ -184,10 +192,16 @@ class ModList:
             clean = clean_name(mod_name).lower()
             if clean not in mods_sources:
                 mods_sources[clean] = []
-            mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, False, False, "Nexus", icon_url, url, []))
+            try:
+                mods_sources[clean].append(Mod(mod_name, mod_version, mod_updated, False, False, "Nexus", icon_url, url, []))
+            except Exception as e:
+                logging.error(f"Error adding mod {mod_name} version {mod_version}: {e}")
+                continue
 
         for mod in mods_sources:
             ordered = sorted(mods_sources[mod])
+            if len(ordered) == 0:
+                continue
             best_candidate = ordered[0]
             best_candidate.urls = [mod.urls[0] for mod in ordered if mod.use_as_url(best_candidate)]
             self._add_online_mod(game.name, best_candidate)
