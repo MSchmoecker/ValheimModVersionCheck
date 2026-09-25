@@ -2,7 +2,7 @@ import datetime
 import logging
 import re
 from typing import Dict, Optional
-from packaging import version
+from src.version import Version
 from src import Mod, clean_name
 from src.config import GameConfig
 
@@ -11,12 +11,12 @@ class ParsedLog:
     def __init__(self):
         self.mods = {}
         self.patchers = {}
-        self.valheim_version: Optional[version.Version] = None
-        self.bepinex_version: Optional[version.Version] = None
-        self.bepinex_thunderstore_version: Optional[version.Version] = None
+        self.valheim_version: Optional[Version] = None
+        self.bepinex_version: Optional[Version] = None
+        self.bepinex_thunderstore_version: Optional[Version] = None
 
 
-def parse_version(prefix: str, anywhere: bool, line: str) -> Optional[version.Version]:
+def parse_version(prefix: str, anywhere: bool, line: str) -> Optional[Version]:
     if anywhere and prefix in line:
         version_string = line.split(prefix)[1].strip().split(" ")[0]
     elif line.startswith(prefix):
@@ -25,7 +25,7 @@ def parse_version(prefix: str, anywhere: bool, line: str) -> Optional[version.Ve
         version_string = None
 
     if version_string:
-        return version.parse(version_string)
+        return Version(version_string)
 
     return None
 
@@ -41,7 +41,7 @@ def parse_mod_load(line: str, parsed_log: ParsedLog):
 
     parsed_log.mods[mod_name] = {
         "original_name": mod_original_name,
-        "version": version.parse(mod_version)
+        "version": Version(mod_version)
     }
 
 
@@ -55,7 +55,7 @@ def parse_patcher_load(line: str, parsed_log: ParsedLog):
 
     parsed_log.patchers[patcher_name] = {
         "name": patcher_name,
-        "version": version.parse(patcher_version)
+        "version": Version(patcher_version)
     }
 
 

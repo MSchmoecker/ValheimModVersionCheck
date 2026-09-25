@@ -6,14 +6,14 @@ from typing import Dict, List, Optional
 from readerwriterlock.rwlock import RWLockRead
 
 from src import nexus, thunderstore, clean_name, decompile, env, config
-from packaging import version
+from src.version import Version
 
 
 class Mod:
     name: str
     clean_name: str
     icon_url: str
-    version: version
+    version: Version
     updated: datetime.datetime
     deprecated: bool
     is_modpack: bool
@@ -24,7 +24,7 @@ class Mod:
     def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, is_modpack: bool, source: str, icon_url: str, url: str, categories: List[str]):
         self.name = name
         self.clean_name = clean_name(name).lower()
-        self.version = version.parse(mod_version)
+        self.version = Version(mod_version)
         self.updated = updated
         self.deprecated = deprecated
         self.is_modpack = is_modpack

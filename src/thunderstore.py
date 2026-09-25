@@ -5,7 +5,7 @@ import app_version
 
 default_headers = {
     "Application-Name": "Mod Version Check",
-    "Application-Version": str(app_version.app_version)
+    "Application-Version": app_version.app_version
 }
 
 

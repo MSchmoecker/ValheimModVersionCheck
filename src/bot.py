@@ -10,14 +10,13 @@ import discord
 import requests
 import logging
 
-from packaging import version
 from discord import Message, ChannelType, app_commands, Interaction, InteractionResponse
 from discord.ext import tasks
 
 from readerwriterlock.rwlock import RWLockRead
 
 import app_version
-from src import ModList, parse_local, compare_mods, parse_errors, env, merge_errors, config, Mod, clean_name
+from src import ModList, parse_local, compare_mods, parse_errors, env, merge_errors, config, Mod, Version, clean_name
 from typing import Optional, List, Dict
 
 
@@ -207,7 +206,7 @@ def run(modlist: ModList):
                 msg += f"BepInEx version: {mods_local.bepinex_version if mods_local.bepinex_version else 'unknown'}"
 
             if game.name == "valheim" and game.ptb_version and mods_local.valheim_version:
-                if mods_local.valheim_version >= version.parse(game.ptb_version):
+                if mods_local.valheim_version >= Version(game.ptb_version):
                     msg += f"\n\n**You are playing a test version of the game (PTB). " \
                            f"Please note that mods may be broken and most mod authors do not offer support. " \
                            f"Downgrade to a stable version of the game or remove mods if you encounter any issues.**"

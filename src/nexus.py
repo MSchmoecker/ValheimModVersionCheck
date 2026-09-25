@@ -23,7 +23,7 @@ def updated_route(game_domain: str):
 default_headers = {
     'apikey': env.NEXUS_API_KEY,
     "Application-Name": "Mod Version Check",
-    "Application-Version": str(app_version.app_version)
+    "Application-Version": app_version.app_version
 }
 
 

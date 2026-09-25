@@ -2,7 +2,6 @@ import yaml
 import os
 from typing import List, Optional
 from pydantic import BaseModel
-from packaging import version
 
 
 config_file_path = os.path.join("config", "config.yml")
