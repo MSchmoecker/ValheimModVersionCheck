@@ -61,6 +61,7 @@ def packages_to_mods(packages: List[dict]) -> List[Mod]:
         try:
             mods.append(
                 Mod(
+                    "",
                     package["name"],
                     version["version_number"],
                     parse_date(version["date_created"]),

@@ -122,6 +122,7 @@ def to_mods(game_domain: str) -> List[Mod]:
 
         try:
             mods.append(Mod(
+                "",
                 package["name"],
                 package["version"],
                 parse_date(package["updated_time"]),

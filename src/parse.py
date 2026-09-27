@@ -30,23 +30,31 @@ def parse_version(prefix: str, anywhere: bool, line: str) -> Optional[Version]:
     return None
 
 
-def parse_mod_load(line: str, parsed_log: ParsedLog):
-    if not line.startswith("[Info   :   BepInEx] Loading ["):
-        return
-    line = line[line.index("[", 1) + 1:line.index("]", 20)]
+MOD_LOAD_PREFIX = "[Info   :   BepInEx] Loading ["
 
-    mod_name = clean_name("".join(line.split(" ")[:-1])).lower()
-    mod_original_name = "".join(line.split(" ")[:-1])
-    mod_version = "".join(line.split(" ")[-1])
+
+def parse_mod_load(line: str, parsed_log: ParsedLog):
+    if not line.startswith(MOD_LOAD_PREFIX):
+        return
+
+    content, _, guid = line.partition("] (")
+    mod_original_name, _, mod_version = content[len(MOD_LOAD_PREFIX):].rstrip("]").rpartition(" ")
+
+    if not mod_original_name:
+        return
+
+    mod_original_name = mod_original_name.replace(" ", "")
+    mod_name = clean_name(mod_original_name).lower()
 
     parsed_log.mods[mod_name] = {
         "original_name": mod_original_name,
-        "version": Version(mod_version)
+        "version": Version(mod_version),
+        "guid": guid.rstrip(")")
     }
 
 
 def parse_patcher_load(line: str, parsed_log: ParsedLog):
-    if not re.match(r"\[Info   :   BepInEx] Loaded \d+ patcher method from \[.*]", line):
+    if not re.match(r"\[Info   :   BepInEx] Loaded \d+ patcher methods? from \[.*]", line):
         return
     line = line[line.index("[", 1) + 1:line.index("]", 20)]
 
@@ -82,25 +90,36 @@ def parse_local(local_text) -> ParsedLog:
     return parsed_log
 
 
-def compare_mods(mods_local, mods_online: Dict[str, Mod], game_config: GameConfig):
+def find_online_mod(local_mod: dict, local_name: str, mods_online: Dict[str, Mod], mods_by_guid: Dict[str, Mod]) -> Optional[Mod]:
+    """Decompiled mods carry the BepInEx guid, which is an exact match. Everything else (e.g. Nexus) only has the display name."""
+    guid = local_mod.get("guid")
+
+    if guid and guid in mods_by_guid:
+        return mods_by_guid[guid]
+
+    return mods_online.get(local_name)
+
+
+def compare_mods(mods_local, mods_online: Dict[str, Mod], mods_by_guid: Dict[str, Mod], game_config: GameConfig):
     time_threshold = datetime.datetime.now() - datetime.timedelta(days=game_config.report_old_mods_threshold_days)
     result = ""
 
     for mod in sorted(mods_local, key=lambda x: mods_local[x]["original_name"].lower()):
         original_name = mods_local[mod]["original_name"]
         mod_version = mods_local[mod]["version"]
+        online_mod = find_online_mod(mods_local[mod], mod, mods_online, mods_by_guid)
 
-        if mod not in mods_online.keys():
+        if online_mod is None:
             logging.info(f"{original_name} not found!")
             continue
 
-        outdated = mod_version < mods_online[mod].version
-        old = game_config.report_old_mods and mods_online[mod].updated < time_threshold
-        deprecated = mods_online[mod].deprecated
+        outdated = mod_version < online_mod.version
+        old = game_config.report_old_mods and online_mod.updated < time_threshold
+        deprecated = online_mod.deprecated
 
         if outdated or old or deprecated:
             if outdated:
-                result += f"{original_name} {mod_version} -> {mods_online[mod].version}\n"
+                result += f"{original_name} {mod_version} -> {online_mod.version}\n"
             else:
                 result += f"{original_name} {mod_version}\n"
 
@@ -108,16 +127,11 @@ def compare_mods(mods_local, mods_online: Dict[str, Mod], game_config: GameConfi
             result += f"\tis deprecated\n"
 
         if outdated:
-            for url in mods_online[mod].urls:
+            for url in online_mod.urls:
                 result += f"\thigher version available: {url}\n"
 
         if old:
-            result += f"\tis older than one year (uploaded {mods_online[mod].updated.strftime('%Y-%m-%d')})\n"
-
-        if mod_version > mods_online[mod].version:
-            continue
-            result += f"{original_name} is newer"
-            result += f"\t{mod_version} -> {mods_online[mod].version}\n"
+            result += f"\tis older than one year (uploaded {online_mod.updated.strftime('%Y-%m-%d')})\n"
 
     return result
 

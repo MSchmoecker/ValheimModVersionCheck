@@ -1,3 +1,4 @@
+import copy
 import datetime
 import logging
 import threading
@@ -10,19 +11,26 @@ from src.mod import Mod, HEXIUM, THUNDERSTORE, NEXUS
 
 
 class ModList:
-    _mods_online: Dict[str, Dict[str, Mod]] = {}
     last_online_fetched: datetime = None
 
     def __init__(self, file_lock: RWLockRead):
+        self._mods_online: Dict[str, Dict[str, Mod]] = {}
+        self._mods_guid: Dict[str, Dict[str, Mod]] = {}
         self.decompile_thread = None
         self.file_lock = file_lock
         self.read_lock = file_lock.gen_rlock()
         self.write_lock = file_lock.gen_wlock()
 
     def get_online_mods(self, community: str) -> Dict[str, Mod]:
+        return self._get_mods(self._mods_online, community)
+
+    def get_online_mods_by_guid(self, community: str) -> Dict[str, Mod]:
+        return self._get_mods(self._mods_guid, community)
+
+    def _get_mods(self, index: Dict[str, Dict[str, Mod]], community: str) -> Dict[str, Mod]:
         self.read_lock.acquire()
         try:
-            return self._mods_online[community]
+            return index[community]
         except:
             return {}
         finally:
@@ -35,6 +43,16 @@ class ModList:
             self._mods_online[community] = {}
 
         self._mods_online[community][mod.clean_name] = mod
+
+        self.write_lock.release()
+
+    def _add_guid_mod(self, community: str, mod: Mod):
+        self.write_lock.acquire()
+
+        if community not in self._mods_guid:
+            self._mods_guid[community] = {}
+
+        self._mods_guid[community][mod.guid] = mod
 
         self.write_lock.release()
 
@@ -96,22 +114,36 @@ class ModList:
             logging.info(f"Fetching {NEXUS} for {game.name} ...")
             mods += nexus.to_mods(game.nexus)
 
-        logging.info(f"Adding mods for {game.name} ...")
+        self.index_mods(game.name, mods)
 
-        mods_sources: Dict[str, List[Mod]] = {}
+    def index_mods(self, game_name: str, mods: List[Mod]):
+        logging.info(f"Adding mods for {game_name} ...")
+
+        mods_by_name: Dict[str, List[Mod]] = {}
+        mods_by_guid: Dict[str, List[Mod]] = {}
 
         for mod in mods:
-            mods_sources.setdefault(mod.clean_name, []).append(mod)
+            mods_by_name.setdefault(mod.clean_name, []).append(mod)
+            if mod.guid:
+                mods_by_guid.setdefault(mod.guid, []).append(mod)
 
-        for candidates in mods_sources.values():
-            ordered = sorted(candidates)
-            best_candidate = ordered[0]
-            urls = [mod.urls[0] for mod in ordered if mod.use_as_url(best_candidate)]
-            # a host contributes both its decompiled and its online entry, which share a url
-            best_candidate.urls = list(dict.fromkeys(urls))
-            self._add_online_mod(game.name, best_candidate)
+        for candidates in mods_by_name.values():
+            self._add_online_mod(game_name, self._merge_candidates(candidates))
 
-        logging.info(f"All {game.name} mods updated")
+        for candidates in mods_by_guid.values():
+            self._add_guid_mod(game_name, self._merge_candidates(candidates))
+
+        logging.info(f"All {game_name} mods updated")
+
+    @staticmethod
+    def _merge_candidates(candidates: List[Mod]) -> Mod:
+        """The best of the candidates, carrying the urls of every candidate worth linking."""
+        ordered = sorted(candidates)
+        best_candidate = copy.copy(ordered[0])
+        # a host contributes both its decompiled and its online entry, which share a url
+        urls = [mod.urls[0] for mod in ordered if mod.use_as_url(ordered[0])]
+        best_candidate.urls = list(dict.fromkeys(urls))
+        return best_candidate
 
     def get_decompiled_mods(self, game_name: str) -> dict:
         mods = {}

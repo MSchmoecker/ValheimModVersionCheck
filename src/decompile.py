@@ -167,9 +167,10 @@ def to_mods(decompiled_mods: dict, source: str) -> List[Mod]:
         url = package.get("url", "")
         icon_url = package.get("icon_url", "")
 
-        for mod in package["mods"].values():
+        for guid, mod in package["mods"].items():
             try:
                 mods.append(Mod(
+                    guid,
                     mod["name"],
                     mod["version"],
                     updated,

@@ -26,6 +26,7 @@ class ModList(RootModel):
 class BepInExMod(BaseModel):
     name: str
     clean_name: str
+    guid: str = ""
     version: str
     updated: datetime.datetime
     deprecated: bool

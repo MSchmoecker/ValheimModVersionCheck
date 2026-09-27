@@ -149,7 +149,7 @@ def test_comparison_with_a_foreign_type_is_rejected():
 
 
 def mod(version, source=THUNDERSTORE, is_modpack=False, updated=datetime.datetime(2024, 1, 1)):
-    return Mod("Some Mod", version, updated, False, is_modpack, source, "", "url", [])
+    return Mod("", "Some Mod", version, updated, False, is_modpack, source, "", "url", [])
 
 
 @pytest.mark.parametrize("decompilable", [THUNDERSTORE, HEXIUM])

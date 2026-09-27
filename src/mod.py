@@ -15,6 +15,7 @@ SOURCE_RANK = {THUNDERSTORE: 0, HEXIUM: 0, NEXUS: 1}
 
 
 class Mod:
+    guid: str
     name: str
     clean_name: str
     icon_url: str
@@ -26,7 +27,8 @@ class Mod:
     urls: List[str]
     categories: List[str]
 
-    def __init__(self, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, is_modpack: bool, source: str, icon_url: str, url: str, categories: List[str]):
+    def __init__(self, guid: str, name: str, mod_version: str, updated: datetime.datetime, deprecated: bool, is_modpack: bool, source: str, icon_url: str, url: str, categories: List[str]):
+        self.guid = guid
         self.name = name
         self.clean_name = clean_name(name).lower()
         self.version = Version(mod_version)
