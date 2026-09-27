@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from src import Mod
+from src.mod import THUNDERSTORE, HEXIUM, NEXUS
 from src.version import Version
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -147,13 +148,28 @@ def test_comparison_with_a_foreign_type_is_rejected():
     assert Version("1.0") != "1.0"
 
 
-def mod(version, source="Thunderstore", is_modpack=False, updated=datetime.datetime(2024, 1, 1)):
+def mod(version, source=THUNDERSTORE, is_modpack=False, updated=datetime.datetime(2024, 1, 1)):
     return Mod("Some Mod", version, updated, False, is_modpack, source, "", "url", [])
 
 
-def test_mod_lt_prefers_thunderstore_over_nexus():
+@pytest.mark.parametrize("decompilable", [THUNDERSTORE, HEXIUM])
+def test_mod_lt_prefers_decompilable_sources_over_nexus(decompilable):
     # Mod.__lt__ means "is the better candidate"; update_mod_list takes sorted(...)[0].
-    assert mod("0.0.1", source="Thunderstore") < mod("9.9.9", source="Nexus")
+    assert mod("0.0.1", source=decompilable) < mod("9.9.9", source=NEXUS)
+
+
+def test_mod_lt_ranks_thunderstore_and_hexium_equally():
+    # Neither outranks the other, so a full tie is decided by the order update_mod_list
+    # appends the sources in, which the stable sort preserves.
+    assert not mod("1.0", source=THUNDERSTORE) < mod("1.0", source=HEXIUM)
+    assert not mod("1.0", source=HEXIUM) < mod("1.0", source=THUNDERSTORE)
+    assert sorted([mod("1.0", source=THUNDERSTORE), mod("1.0", source=HEXIUM)])[0].source == THUNDERSTORE
+    assert sorted([mod("1.0", source=HEXIUM), mod("1.0", source=THUNDERSTORE)])[0].source == HEXIUM
+
+
+def test_mod_lt_prefers_the_higher_version_across_equally_ranked_sources():
+    assert mod("2.0", source=HEXIUM) < mod("1.0", source=THUNDERSTORE)
+    assert mod("2.0", source=THUNDERSTORE) < mod("1.0", source=HEXIUM)
 
 
 def test_mod_lt_prefers_non_modpacks():

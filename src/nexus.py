@@ -1,11 +1,14 @@
+import datetime
 import json
 import os
 import requests
 import logging
 from pathlib import Path
+from typing import List
 
 import app_version
 from src import env
+from src.mod import Mod, NEXUS
 
 
 def file_path(game_domain: str):
@@ -102,5 +105,34 @@ def fetch_online(game_domain: str) -> dict:
 
     add_new_mods(game_domain, mods)
     update_mods(game_domain, mods)
+
+    return mods
+
+
+def parse_date(date: str) -> datetime.datetime:
+    return datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f%z").replace(tzinfo=None)
+
+
+def to_mods(game_domain: str) -> List[Mod]:
+    mods: List[Mod] = []
+
+    for package in fetch_online(game_domain).values():
+        if package is None or package["status"] != "published":
+            continue
+
+        try:
+            mods.append(Mod(
+                package["name"],
+                package["version"],
+                parse_date(package["updated_time"]),
+                False,
+                False,
+                NEXUS,
+                package["picture_url"],
+                f"https://www.nexusmods.com/{game_domain}/mods/{package['mod_id']}",
+                [],
+            ))
+        except Exception as e:
+            logging.error(f"Error adding mod {package['name']} from {NEXUS}: {e}")
 
     return mods

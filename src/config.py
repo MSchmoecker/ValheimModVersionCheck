@@ -11,6 +11,7 @@ class GameConfig(BaseModel):
     name: str
     bepinex: List[str]
     thunderstore: Optional[str] = None
+    hexium: Optional[str] = None
     nexus: Optional[str] = None
     ptb_version: Optional[str] = None
     report_old_mods: bool = True

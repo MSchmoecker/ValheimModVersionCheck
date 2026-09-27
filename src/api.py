@@ -12,7 +12,8 @@ def run(modlist: ModList):
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     @app.get("/experimental/thunderstore-mods", response_model=schemas.ModList, tags=["deprecated"], deprecated=True)
-    @app.get("/experimental/thunderstore-mods/{community}", response_model=schemas.ModList)
+    @app.get("/experimental/thunderstore-mods/{community}", response_model=schemas.ModList, deprecated=True)
+    @app.get("/experimental/extracted-mods/{community}", response_model=schemas.ModList)
     def thunderstore_mods(community: str = "valheim"):
         return modlist.get_decompiled_mods(community.strip().lower())
 

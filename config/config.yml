@@ -2,6 +2,7 @@ games:
   - name: "valheim"
     bepinex: ["valheim", "valheim_server"]
     thunderstore: "valheim"
+    hexium: "valheim"
     nexus: "valheim"
     report_old_mods: false
     report_old_mods_threshold_days: 365

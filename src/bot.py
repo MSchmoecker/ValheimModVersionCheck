@@ -53,10 +53,10 @@ def run(modlist: ModList):
         if logs is not None:
             await on_checkmods(message, message, logs, True)
 
-    @tree.command(name="thunderstore_mods")
+    @tree.command(name="extracted_mods")
     async def send_indexed_mods(interaction: InteractionTyped, community: str, search: Optional[str]):
         query = search or ""
-        mods = modlist.get_decompiled_mods(community)
+        mods = modlist.get_decompiled_mods(community.strip().lower())
 
         if len(query) > 0:
             query = query.lower()
@@ -75,7 +75,7 @@ def run(modlist: ModList):
 
             mods = result
 
-        msg = "This are the extracted mods from Thunderstore"
+        msg = "These are the extracted mods"
         response_decompiled_mods = make_file(json.dumps(mods, indent=4, sort_keys=True), "mods.json")
 
         await interaction.response.send_message(msg)
@@ -185,8 +185,8 @@ def run(modlist: ModList):
             msg = "Here you go! " \
                   "This is an automated check to quickly identify common problems. " \
                   "You can also DM me with log files.\n" \
-                  "A flagged mod update may not exist if the mod is only available on NexusMods, " \
-                  "the name is ambiguous or a beta version has been uploaded to Thunderstore.\n" \
+                  "A flagged mod update may not exist if the name is ambiguous " \
+                  "or a beta version has been uploaded.\n" \
                   "Take it with a grain of salt. "
 
             if len(outdated_mods) == 0:

@@ -3,11 +3,13 @@ import logging
 import os
 import shutil
 import tempfile
+from typing import Iterator, List, Tuple
 
 import requests
 from readerwriterlock.rwlock import RWLockRead
 
-from src import thunderstore
+from src import hexium, thunderstore
+from src.mod import Mod, HEXIUM, THUNDERSTORE
 
 # Bump when metadata extraction changes, so mods can be considered for re-decompilation
 # 1: legacy
@@ -15,33 +17,49 @@ from src import thunderstore
 DECOMPILE_PARSER_VERSION = 2
 
 
-def mods_file_path(community: str):
-    return os.path.join("data", f"{community}_decompiled_mods.json")
+def fetch_online(host: str, community: str) -> Tuple[bool, List[dict]]:
+    if host == THUNDERSTORE:
+        return thunderstore.fetch_online(community)
+    if host == HEXIUM:
+        return hexium.fetch_online(community)
+    raise ValueError(f"{host} cannot be decompiled")
 
 
-def fetch_mods(community: str, file_lock: RWLockRead):
-    logging.info(f"Fetching Thunderstore for {community} ...")
-    success, thunder_mods = thunderstore.fetch_online(community)
+def download_mod(host: str, download_url: str) -> requests.Response:
+    if host == THUNDERSTORE:
+        return thunderstore.download_mod(download_url)
+    if host == HEXIUM:
+        return hexium.download_mod(download_url)
+    raise ValueError(f"{host} cannot be decompiled")
+
+
+def mods_file_path(host: str, community: str) -> str:
+    return os.path.join("data", f"{community}_{host.lower()}_decompiled_mods.json")
+
+
+def fetch_mods(host: str, community: str, file_lock: RWLockRead):
+    logging.info(f"Fetching {host} for {community} ...")
+    success, online_mods = fetch_online(host, community)
 
     if not success:
         return
 
     write_lock = file_lock.gen_rlock()
     read_lock = file_lock.gen_rlock()
-    decompiled_mods = read_extracted_mod_from_file(community, read_lock)
+    decompiled_mods = read_extracted_mod_from_file(host, community, read_lock)
 
     mod_lookup = set()
-    for mod in thunder_mods:
+    for mod in online_mods:
         mod_lookup.add(mod["full_name"])
 
     for mod in list(decompiled_mods.keys()):
         if mod not in mod_lookup:
             logging.info(
-                f"Removing {mod} from decompiled mods, not longer on Thunderstore"
+                f"Removing {mod} from decompiled mods, not longer on {host}"
             )
             del decompiled_mods[mod]
 
-    for mod in thunder_mods:
+    for mod in online_mods:
         online_mod_name = mod["full_name"]
         online_name = mod["name"]
         online_mod_version = mod["versions"][0]["version_number"]
@@ -49,11 +67,7 @@ def fetch_mods(community: str, file_lock: RWLockRead):
         date_created = mod["versions"][0]["date_created"]
         icon_url = mod["versions"][0]["icon"]
         is_deprecated = mod["is_deprecated"]
-        is_modpack = (
-            "Modpacks" in mod["categories"]
-            or "modpack" in online_name.lower()
-            or len(mod["versions"][0]["dependencies"]) >= 5
-        )
+        is_modpack = thunderstore.is_modpack(mod)
         url = mod["package_url"]
 
         if online_name != "r2modman":
@@ -76,7 +90,7 @@ def fetch_mods(community: str, file_lock: RWLockRead):
                         continue
 
             plugins = extract_mod_metadata(
-                online_mod_name, online_mod_version, download_url
+                host, online_mod_name, online_mod_version, download_url
             )
 
             write_lock.acquire()
@@ -108,7 +122,7 @@ def fetch_mods(community: str, file_lock: RWLockRead):
                                 "version": mod_version,
                             }
 
-                with open(mods_file_path(community), "w") as f:
+                with open(mods_file_path(host, community), "w") as f:
                     json.dump(decompiled_mods, f, indent=4)
 
             finally:
@@ -116,34 +130,65 @@ def fetch_mods(community: str, file_lock: RWLockRead):
 
     write_lock.acquire()
 
-    with open(mods_file_path(community), "w") as f:
+    with open(mods_file_path(host, community), "w") as f:
         json.dump(decompiled_mods, f, indent=4)
 
     write_lock.release()
 
-    logging.info(f"Fetching Thunderstore for {community} done")
+    logging.info(f"Fetching {host} for {community} done")
 
 
-def read_extracted_mod_from_file(community: str, read_lock) -> dict:
+def read_extracted_mod_from_file(host: str, community: str, read_lock) -> dict:
     read_lock.acquire()
     try:
-        return _read_decompiled_mods(community)
+        return _read_decompiled_mods(host, community)
     finally:
         read_lock.release()
 
 
-def _read_decompiled_mods(community: str) -> dict:
+def _read_decompiled_mods(host: str, community: str) -> dict:
     try:
-        with open(mods_file_path(community), "r") as f:
+        with open(mods_file_path(host, community), "r") as f:
             decompiled_mods: dict = json.load(f)
             return decompiled_mods
     except:
         return {}
 
 
-def extract_mod_metadata(mod_name, mod_version, download_url):
+def to_mods(decompiled_mods: dict, source: str) -> List[Mod]:
+    """The decompiled format is host independent, only the source name differs."""
+    mods: List[Mod] = []
+
+    for package in decompiled_mods.values():
+        updated = thunderstore.parse_date(package["date"])
+        deprecated = package.get("is_deprecated", False)
+        is_modpack = package.get("is_modpack", False)
+        categories = package.get("categories", [])
+        url = package.get("url", "")
+        icon_url = package.get("icon_url", "")
+
+        for mod in package["mods"].values():
+            try:
+                mods.append(Mod(
+                    mod["name"],
+                    mod["version"],
+                    updated,
+                    deprecated,
+                    is_modpack,
+                    source,
+                    icon_url,
+                    url,
+                    categories,
+                ))
+            except Exception as e:
+                logging.error(f"Error adding mod {mod['name']} version {mod['version']} from {source}: {e}")
+
+    return mods
+
+
+def extract_mod_metadata(host: str, mod_name: str, mod_version: str, download_url: str) -> Iterator[List[str]]:
     logging.info(f"Downloading {mod_name} {mod_version} from {download_url}")
-    r = thunderstore.download_mod(download_url)
+    r = download_mod(host, download_url)
     plugins = extract_bep_in_plugin(mod_name, mod_version, r)
 
     for plugin in plugins:
