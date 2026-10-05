@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+* Added parsing and matching for mod guids from the log if available
+* Added Hexium support
+* Changed version parsing to support custom formats like 1.0.0-hotfix
+* Changed DECOMPILE_THUNDERSTORE_MODS env to DECOMPILE_MODS
+* Fixed parsing BepInEx metadata with comma inside arguments
+
 ## 0.11.1
 * Fixed categories of existing decompiled mods were not being updated
 
